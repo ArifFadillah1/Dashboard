@@ -90,12 +90,20 @@
     background: var(--page-plane);
     color: var(--text-primary);
     font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    font-size: 14px;
-    line-height: 1.45;
+    font-size: 15.5px;
+    line-height: 1.5;
   }
   img { max-width: 100%; }
   [hidden] { display: none !important; }
   .tabular { font-variant-numeric: tabular-nums; }
+
+  [title] { cursor: help; }
+  .has-tip {
+    cursor: help;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--text-muted);
+  }
 
   a { color: var(--s1-blue); }
 
@@ -114,7 +122,7 @@
     margin-bottom: 18px;
   }
   header.app-header h1 {
-    font-size: 20px;
+    font-size: 21px;
     margin: 0 0 4px;
     letter-spacing: -0.01em;
   }
@@ -160,7 +168,7 @@
     padding: 16px;
   }
   .card h2 {
-    font-size: 13px;
+    font-size: 14px;
     text-transform: uppercase;
     letter-spacing: .04em;
     color: var(--text-secondary);
@@ -170,7 +178,7 @@
     justify-content: space-between;
     gap: 8px;
   }
-  .card h2 .hint { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--text-muted); font-size: 12px; }
+  .card h2 .hint { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--text-muted); font-size: 13px; }
 
   /* Filter bar */
   .filters {
@@ -186,14 +194,14 @@
     align-items: center;
   }
   .filter-group { display: flex; flex-direction: column; gap: 6px; }
-  .filter-group > label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); }
+  .filter-group > label { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); }
   .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip {
     border-radius: var(--radius-chip);
     border: 1px solid var(--border);
     background: var(--surface-2);
     padding: 5px 11px;
-    font-size: 12.5px;
+    font-size: 13.5px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -225,10 +233,10 @@
     margin-bottom: 18px;
   }
   .kpi-tile { display: flex; flex-direction: column; gap: 4px; }
-  .kpi-tile .label { font-size: 12px; color: var(--text-secondary); }
-  .kpi-tile .value { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
-  .kpi-tile .value small { font-size: 15px; font-weight: 600; color: var(--text-secondary); margin-left: 2px; }
-  .kpi-tile .sub { font-size: 12px; color: var(--text-muted); }
+  .kpi-tile .label { font-size: 13px; color: var(--text-secondary); }
+  .kpi-tile .value { font-size: 29px; font-weight: 700; letter-spacing: -0.02em; }
+  .kpi-tile .value small { font-size: 16px; font-weight: 600; color: var(--text-secondary); margin-left: 2px; }
+  .kpi-tile .sub { font-size: 13px; color: var(--text-muted); }
   .kpi-tile .sub.good { color: var(--success-text); }
   .kpi-tile .sub.bad { color: var(--status-critical); font-weight: 600; }
 
@@ -245,20 +253,20 @@
   .chart-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
   .chart-canvas-wrap { position: relative; height: 300px; }
   .chart-canvas-wrap.small { height: 260px; }
-  .chart-footnote { font-size: 11.5px; color: var(--text-muted); margin-top: 8px; }
+  .chart-footnote { font-size: 12.5px; color: var(--text-muted); margin-top: 8px; }
 
   /* Donut legend */
   .donut-layout { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
   .donut-legend { flex: 1 1 160px; display: flex; flex-direction: column; gap: 8px; min-width: 170px; }
-  .legend-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+  .legend-row { display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
   .legend-row .dot { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; }
   .legend-row .name { color: var(--text-primary); flex: 1; }
   .legend-row .pct { color: var(--text-secondary); }
-  .legend-row .hrs { color: var(--text-muted); font-size: 11.5px; }
+  .legend-row .hrs { color: var(--text-muted); font-size: 12.5px; }
 
   /* Timeline */
   .timeline-rig-row { display: grid; grid-template-columns: 110px 1fr; gap: 10px; align-items: center; margin-bottom: 8px; }
-  .timeline-rig-row .rig-label { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+  .timeline-rig-row .rig-label { font-size: 13.5px; font-weight: 600; color: var(--text-secondary); }
   .timeline-track {
     position: relative;
     height: 26px;
@@ -272,25 +280,25 @@
     cursor: default;
   }
   .timeline-axis { display: grid; grid-template-columns: 110px 1fr; gap: 10px; margin-top: 2px; }
-  .timeline-axis .ticks { position: relative; height: 16px; font-size: 10.5px; color: var(--text-muted); }
+  .timeline-axis .ticks { position: relative; height: 16px; font-size: 11.5px; color: var(--text-muted); }
   .timeline-axis .ticks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
   .timeline-tooltip {
     position: fixed;
     pointer-events: none;
     background: var(--text-primary);
     color: var(--page-plane);
-    font-size: 11.5px;
+    font-size: 12.5px;
     padding: 6px 9px;
     border-radius: 6px;
     z-index: 50;
-    max-width: 240px;
+    max-width: 300px;
     box-shadow: 0 4px 14px rgba(0,0,0,.25);
   }
 
   /* Table */
-  table.alert-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.alert-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   table.alert-table th, table.alert-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--gridline); }
-  table.alert-table th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 10.5px; letter-spacing: .03em; cursor: pointer; user-select: none; }
+  table.alert-table th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 11.5px; letter-spacing: .03em; cursor: pointer; user-select: none; }
   table.alert-table th:hover { color: var(--text-primary); }
   table.alert-table tbody tr:hover { background: color-mix(in srgb, var(--s1-blue) 6%, transparent); }
   .badge {
@@ -299,17 +307,17 @@
   }
   .badge.critical { background: color-mix(in srgb, var(--status-critical) 16%, transparent); color: var(--status-critical); }
   .table-scroll { overflow-x: auto; }
-  .empty-state { color: var(--text-muted); font-size: 12.5px; padding: 18px 4px; text-align: center; }
+  .empty-state { color: var(--text-muted); font-size: 13.5px; padding: 18px 4px; text-align: center; }
 
-  .status-def-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px,1fr)); gap: 8px; font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
+  .status-def-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px,1fr)); gap: 8px; font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
   .status-def-list .item { display: flex; gap: 8px; align-items: flex-start; }
   .status-def-list .dot { width: 10px; height: 10px; border-radius: 3px; margin-top: 3px; flex: 0 0 auto; }
-  details.engine-explainer summary { cursor: pointer; color: var(--s1-blue); font-size: 12.5px; margin-top: 4px; }
+  details.engine-explainer summary { cursor: pointer; color: var(--s1-blue); font-size: 13.5px; margin-top: 4px; }
 
-  footer.app-footer { margin-top: 26px; color: var(--text-muted); font-size: 11.5px; text-align: center; }
+  footer.app-footer { margin-top: 26px; color: var(--text-muted); font-size: 12.5px; text-align: center; }
   footer.app-footer a { color: var(--text-muted); text-decoration: underline; }
 
-  #uploadBanner { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); font-size: 12.5px; }
+  #uploadBanner { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); font-size: 13.5px; }
   #uploadBanner.error { border-color: var(--status-critical); color: var(--status-critical); background: color-mix(in srgb, var(--status-critical) 8%, transparent); }
   #uploadBanner.ok { border-color: var(--status-good); color: var(--success-text); background: color-mix(in srgb, var(--status-good) 8%, transparent); }
 
@@ -345,11 +353,11 @@
   <section class="filters card">
     <div class="filters-row">
       <div class="filter-group">
-        <label>Rig ID</label>
+        <label class="has-tip" title="Pilih satu atau lebih rig untuk ditampilkan. Semua chart & KPI akan otomatis menyesuaikan ke rig yang dipilih.">Rig ID</label>
         <div class="chip-row" id="rigChips"></div>
       </div>
       <div class="filter-group">
-        <label>Rentang Waktu</label>
+        <label class="has-tip" title="Batasi data yang ditampilkan ke rentang tanggal tertentu.">Rentang Waktu</label>
         <div class="date-inputs">
           <input type="date" id="startDate" />
           <span>–</span>
@@ -357,12 +365,12 @@
         </div>
       </div>
       <div class="filter-group">
-        <label>Preset</label>
+        <label class="has-tip" title="Pilihan cepat untuk mengisi rentang tanggal di sebelah kiri.">Preset</label>
         <div class="chip-row">
-          <button class="chip" data-preset="24h" type="button">24 Jam</button>
-          <button class="chip" data-preset="3d" type="button">3 Hari</button>
-          <button class="chip" data-preset="7d" type="button">7 Hari</button>
-          <button class="chip" data-preset="all" type="button">Semua</button>
+          <button class="chip has-tip" data-preset="24h" type="button" title="Tampilkan hanya 24 jam terakhir dari data.">24 Jam</button>
+          <button class="chip has-tip" data-preset="3d" type="button" title="Tampilkan hanya 3 hari terakhir dari data.">3 Hari</button>
+          <button class="chip has-tip" data-preset="7d" type="button" title="Tampilkan hanya 7 hari terakhir dari data.">7 Hari</button>
+          <button class="chip has-tip" data-preset="all" type="button" title="Tampilkan seluruh data tanpa batasan tanggal.">Semua</button>
         </div>
       </div>
     </div>
@@ -372,7 +380,7 @@
 
   <section class="grid-2">
     <div class="card">
-      <h2>Tren Gabungan Sensor Operasional <span class="hint" id="focusRigLabel"></span></h2>
+      <h2><span class="has-tip" title="Grafik garis waktu yang menampilkan beberapa parameter sensor sekaligus (WOB, RPM, Torque, dll.), dinormalisasi ke satu skala agar mudah dibandingkan.">Tren Gabungan Sensor Operasional</span> <span class="hint" id="focusRigLabel"></span></h2>
       <div class="chart-toolbar">
         <select id="focusRigSelect" aria-label="Rig untuk grafik tren"></select>
         <div class="chip-row" id="paramChips"></div>
@@ -382,7 +390,7 @@
     </div>
 
     <div class="card">
-      <h2>Distribusi Status Operasional
+      <h2><span class="has-tip" title="Diagram lingkaran yang menunjukkan proporsi waktu rig berada di setiap status operasional, pada rentang data yang sedang difilter.">Distribusi Status Operasional</span>
         <button class="btn" id="donutTableToggle" type="button" style="font-size:11px;padding:3px 9px;">Tampilkan tabel</button>
       </h2>
       <div class="donut-layout">
@@ -405,19 +413,23 @@
 
   <section class="card full-width">
     <h2>Alert &amp; Log Kejadian Anomali Operasional <span class="hint" id="alertCountHint"></span></h2>
+    <div class="filter-group" style="margin-bottom:10px;">
+      <label class="has-tip" title="Tampilkan hanya kejadian anomali dengan penyebab tertentu.">Filter Penyebab</label>
+      <div class="chip-row" id="alertCauseChips"></div>
+    </div>
     <div class="table-scroll">
       <table class="alert-table" id="alertTable">
         <thead>
           <tr>
-            <th data-sort="rig">Rig ID</th>
-            <th data-sort="start">Mulai</th>
-            <th data-sort="end">Selesai</th>
-            <th data-sort="duration">Durasi</th>
-            <th data-sort="peakSpp">Peak SPP</th>
-            <th data-sort="peakTorque">Peak Torque</th>
-            <th data-sort="minWob">Min WOB</th>
-            <th>Kemungkinan Penyebab</th>
-            <th>Severity</th>
+            <th data-sort="rig" class="has-tip" title="ID rig tempat anomali ini terjadi.">Rig ID</th>
+            <th data-sort="start" class="has-tip" title="Waktu anomali mulai terdeteksi.">Mulai</th>
+            <th data-sort="end" class="has-tip" title="Waktu anomali berakhir (kembali ke status normal).">Selesai</th>
+            <th data-sort="duration" class="has-tip" title="Berapa lama kejadian anomali ini berlangsung.">Durasi</th>
+            <th data-sort="peakSpp" class="has-tip" title="Standpipe Pressure (tekanan lumpur bor di pipa) tertinggi yang tercatat selama kejadian ini. Melonjak tinggi bisa jadi tanda tekanan balik dari formasi (kick).">Peak SPP</th>
+            <th data-sort="peakTorque" class="has-tip" title="Torque (gaya puntir saat memutar rangkaian bor) tertinggi yang tercatat selama kejadian ini. Melonjak tinggi bisa jadi tanda pipa terjepit.">Peak Torque</th>
+            <th data-sort="minWob" class="has-tip" title="Weight on Bit (tekanan mata bor ke dasar sumur) terendah yang tercatat selama kejadian ini.">Min WOB</th>
+            <th class="has-tip" title="Dugaan penyebab anomali berdasarkan pola sensor yang terekam.">Kemungkinan Penyebab</th>
+            <th class="has-tip" title="Tingkat keparahan kejadian.">Severity</th>
           </tr>
         </thead>
         <tbody id="alertTableBody"></tbody>
@@ -427,7 +439,7 @@
   </section>
 
   <footer class="app-footer">
-    Data pada dashboard ini adalah <strong>data sample sintetis</strong> untuk keperluan demonstrasi teknis, bukan data lapangan aktual.
+    Dataset bawaan adalah <strong>data telemetri riil</strong> dari case-study data pack (di-resample ke interval 1 menit); identitas rig tidak disertakan pada sumber data asli.
     Chart rendering menggunakan <a href="https://www.chartjs.org/" target="_blank" rel="noopener">Chart.js</a> (MIT License, disematkan inline di file ini).
   </footer>
 </div>

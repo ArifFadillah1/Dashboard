@@ -14,15 +14,16 @@ Pilihan ini didasarkan pada tiga pertimbangan utama sesuai konteks technical tes
 
 Setiap baris data sensor diklasifikasikan melalui **rangkaian aturan ambang batas berprioritas** (dievaluasi berurutan, berhenti pada kecocokan pertama):
 
-1. **Critical Anomaly** dicek **paling pertama** (prinsip *safety first*) — dipicu oleh SPP ≥ 3500 psi (indikasi kick/pack-off) atau lonjakan Torque ≥ 28 kft-lb bersamaan dengan WOB rendah (indikasi stuck pipe).
+1. **Critical Anomaly** dicek **paling pertama** (prinsip *safety first*) — dipicu oleh SPP ≥ 3500 psi (indikasi kick/pack-off) atau lonjakan Torque ≥ 3000 bersamaan dengan WOB rendah (indikasi stuck pipe).
 2. **Drilling** — kombinasi WOB, RPM, Torque, dan Flow di atas ambang aktif, **dan** posisi bit berada di kedalaman hole (selisih ≤ 3 ft) — membedakan "berputar & menembus formasi" dari "berputar di permukaan".
 3. **Circulating** — flow aktif tanpa WOB/RPM signifikan (mud conditioning tanpa penetrasi).
 4. **Tripping In/Out** — laju perubahan bit depth melampaui ambang (dinyatakan dalam **ft/jam**, bukan per-sampel, agar tetap valid pada interval logging berapa pun — lihat catatan implementasi di bawah), dengan flow & WOB rendah; arah (in/out) ditentukan dari tanda perubahan kedalaman.
-5. **Idle/Standby** — status default ketika tidak ada kondisi di atas terpenuhi.
+5. **Connection** — jeda singkat menyambung/melepas pipa: bukan Tripping, flow & WOB rendah, namun Hookload berubah tajam antar sampel (≥ 5 klbs).
+6. **Idle/Standby** — status default ketika tidak ada kondisi di atas terpenuhi.
 
-**Catatan implementasi penting:** interval sampling dataset diinferensikan otomatis dari median selisih timestamp antar baris (`inferIntervalHours`), bukan diasumsikan konstan. Ini memastikan perhitungan KPI (jam operasi, durasi status) dan threshold rate-based (Tripping) tetap akurat baik untuk dataset sample bawaan (interval 15 menit) maupun CSV yang diunggah pengguna dengan frekuensi logging berbeda (1 menit, 1 jam, dst).
+**Catatan implementasi penting:** data mentah pada case-study data pack dicatat pada interval tidak beraturan (~1,5–2 detik, 30–50 baris/menit) tetapi timestamp hanya presisi menit, sehingga `parseCsv` melakukan resampling ke **1 baris per menit** (mengambil pembacaan terakhir dalam menit tersebut) sebelum klasifikasi. Interval sampling dataset kemudian diinferensikan otomatis dari median selisih timestamp antar baris (`inferIntervalHours`), bukan diasumsikan konstan — memastikan perhitungan KPI dan threshold rate-based (Tripping) tetap akurat baik untuk dataset riil bawaan (1 menit) maupun CSV yang diunggah pengguna dengan frekuensi logging berbeda. Variansi torque intra-menit (sinyal potensial untuk deteksi stick-slip) hilang saat resampling — ini dicatat sebagai batasan yang disengaja, bukan diselesaikan dengan menambah engine deteksi baru di luar cakupan inti.
 
-Threshold dipilih berdasarkan rentang parameter operasi pemboran yang umum dan dikalibrasi terhadap pola dataset sample; pada implementasi produksi nilai ini sebaiknya dikonfigurasi per rig/formasi menggunakan data historis (lihat matriks lengkap di [README](../README.md#matriks-klasifikasi-status-rig)).
+Threshold Torque dikalibrasi terhadap distribusi persentil nilai riil (bukan label satuan pada header, yang tampak tidak konsisten dengan skala nilainya — lihat catatan di [README](../README.md#matriks-klasifikasi-status-rig)); threshold lain dipilih dari rentang parameter operasi pemboran yang umum dan pola dataset riil. Pada implementasi produksi nilai ini sebaiknya dikonfigurasi per rig/formasi menggunakan data historis (lihat matriks lengkap di [README](../README.md#matriks-klasifikasi-status-rig)).
 
 ## 3. Optimisasi Performa
 
