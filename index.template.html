@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Rig Operational Status Dashboard</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --surface-2:      #ffffff;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --success-text:   #006300;
+
+    --s1-blue:    #2a78d6;
+    --s2-orange:  #eb6834;
+    --s3-aqua:    #1baf7a;
+    --s4-yellow:  #eda100;
+    --s5-magenta: #e87ba4;
+    --s6-green:   #008300;
+    --s7-violet:  #4a3aa7;
+    --s8-red:     #e34948;
+
+    --status-good:     #0ca30c;
+    --status-warning:  #fab219;
+    --status-serious:  #ec835a;
+    --status-critical: #d03b3b;
+
+    --radius-card: 12px;
+    --radius-chip: 999px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --surface-2:      #201f1d;
+      --page-plane:     #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --success-text:   #0ca30c;
+
+      --s1-blue:    #3987e5;
+      --s2-orange:  #d95926;
+      --s3-aqua:    #199e70;
+      --s4-yellow:  #c98500;
+      --s5-magenta: #d55181;
+      --s6-green:   #008300;
+      --s7-violet:  #9085e9;
+      --s8-red:     #e66767;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --surface-2:      #201f1d;
+    --page-plane:     #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --success-text:   #0ca30c;
+
+    --s1-blue:    #3987e5;
+    --s2-orange:  #d95926;
+    --s3-aqua:    #199e70;
+    --s4-yellow:  #c98500;
+    --s5-magenta: #d55181;
+    --s6-green:   #008300;
+    --s7-violet:  #9085e9;
+    --s8-red:     #e66767;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-top: env(safe-area-inset-top, 0px);
+    background: var(--page-plane);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  a { color: var(--s1-blue); }
+
+  .wrap {
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 20px 20px 48px;
+  }
+
+  header.app-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  header.app-header h1 {
+    font-size: 20px;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  header.app-header p.subtitle {
+    margin: 0;
+    color: var(--text-secondary);
+    max-width: 62ch;
+  }
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  button, .btn {
+    font: inherit;
+    cursor: pointer;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-primary);
+    padding: 7px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  button:hover, .btn:hover { border-color: var(--s1-blue); }
+  button.primary {
+    background: var(--s1-blue);
+    border-color: var(--s1-blue);
+    color: #fff;
+  }
+  button.primary:hover { filter: brightness(1.06); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  input[type="file"] { display: none; }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 16px;
+  }
+  .card h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-secondary);
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .card h2 .hint { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--text-muted); font-size: 12px; }
+
+  /* Filter bar */
+  .filters {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .filters-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 6px; }
+  .filter-group > label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    border-radius: var(--radius-chip);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    padding: 5px 11px;
+    font-size: 12.5px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+  }
+  .chip .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .chip[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--s1-blue) 14%, var(--surface-2));
+    border-color: var(--s1-blue);
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .date-inputs { display: flex; gap: 6px; align-items: center; }
+  .date-inputs input[type="date"], .date-inputs input[type="time"] {
+    font: inherit; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--text-primary);
+  }
+  select {
+    font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--text-primary);
+  }
+
+  /* KPI */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .kpi-tile { display: flex; flex-direction: column; gap: 4px; }
+  .kpi-tile .label { font-size: 12px; color: var(--text-secondary); }
+  .kpi-tile .value { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+  .kpi-tile .value small { font-size: 15px; font-weight: 600; color: var(--text-secondary); margin-left: 2px; }
+  .kpi-tile .sub { font-size: 12px; color: var(--text-muted); }
+  .kpi-tile .sub.good { color: var(--success-text); }
+  .kpi-tile .sub.bad { color: var(--status-critical); font-weight: 600; }
+
+  /* Grid layout for charts */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+    align-items: stretch;
+  }
+  .full-width { margin-bottom: 14px; }
+
+  .chart-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .chart-canvas-wrap { position: relative; height: 300px; }
+  .chart-canvas-wrap.small { height: 260px; }
+  .chart-footnote { font-size: 11.5px; color: var(--text-muted); margin-top: 8px; }
+
+  /* Donut legend */
+  .donut-layout { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .donut-legend { flex: 1 1 160px; display: flex; flex-direction: column; gap: 8px; min-width: 170px; }
+  .legend-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+  .legend-row .dot { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; }
+  .legend-row .name { color: var(--text-primary); flex: 1; }
+  .legend-row .pct { color: var(--text-secondary); }
+  .legend-row .hrs { color: var(--text-muted); font-size: 11.5px; }
+
+  /* Timeline */
+  .timeline-rig-row { display: grid; grid-template-columns: 110px 1fr; gap: 10px; align-items: center; margin-bottom: 8px; }
+  .timeline-rig-row .rig-label { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+  .timeline-track {
+    position: relative;
+    height: 26px;
+    background: var(--gridline);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .timeline-seg {
+    position: absolute;
+    top: 0; bottom: 0;
+    cursor: default;
+  }
+  .timeline-axis { display: grid; grid-template-columns: 110px 1fr; gap: 10px; margin-top: 2px; }
+  .timeline-axis .ticks { position: relative; height: 16px; font-size: 10.5px; color: var(--text-muted); }
+  .timeline-axis .ticks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+  .timeline-tooltip {
+    position: fixed;
+    pointer-events: none;
+    background: var(--text-primary);
+    color: var(--page-plane);
+    font-size: 11.5px;
+    padding: 6px 9px;
+    border-radius: 6px;
+    z-index: 50;
+    max-width: 240px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  }
+
+  /* Table */
+  table.alert-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.alert-table th, table.alert-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--gridline); }
+  table.alert-table th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 10.5px; letter-spacing: .03em; cursor: pointer; user-select: none; }
+  table.alert-table th:hover { color: var(--text-primary); }
+  table.alert-table tbody tr:hover { background: color-mix(in srgb, var(--s1-blue) 6%, transparent); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;
+  }
+  .badge.critical { background: color-mix(in srgb, var(--status-critical) 16%, transparent); color: var(--status-critical); }
+  .table-scroll { overflow-x: auto; }
+  .empty-state { color: var(--text-muted); font-size: 12.5px; padding: 18px 4px; text-align: center; }
+
+  .status-def-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px,1fr)); gap: 8px; font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
+  .status-def-list .item { display: flex; gap: 8px; align-items: flex-start; }
+  .status-def-list .dot { width: 10px; height: 10px; border-radius: 3px; margin-top: 3px; flex: 0 0 auto; }
+  details.engine-explainer summary { cursor: pointer; color: var(--s1-blue); font-size: 12.5px; margin-top: 4px; }
+
+  footer.app-footer { margin-top: 26px; color: var(--text-muted); font-size: 11.5px; text-align: center; }
+  footer.app-footer a { color: var(--text-muted); text-decoration: underline; }
+
+  #uploadBanner { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); font-size: 12.5px; }
+  #uploadBanner.error { border-color: var(--status-critical); color: var(--status-critical); background: color-mix(in srgb, var(--status-critical) 8%, transparent); }
+  #uploadBanner.ok { border-color: var(--status-good); color: var(--success-text); background: color-mix(in srgb, var(--status-good) 8%, transparent); }
+
+  @media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+    .timeline-rig-row, .timeline-axis { grid-template-columns: 72px 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="app-header">
+    <div>
+      <h1>Rig Operational Status Dashboard</h1>
+      <p class="subtitle">Deteksi status operasional rig (Drilling, Circulating, Tripping In/Out, Idle/Standby, Critical Anomaly) berbasis rule-engine ambang batas parameter sensor pemboran.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn" id="themeToggle" type="button" title="Ganti tema terang/gelap">🌓 Tema</button>
+      <button class="btn" id="downloadSampleBtn" type="button">⬇️ Unduh Contoh CSV</button>
+      <label class="btn" for="csvInput">⬆️ Upload CSV</label>
+      <input type="file" id="csvInput" accept=".csv,text/csv" />
+      <button class="btn" id="resetSampleBtn" type="button">↺ Reset ke Data Sample</button>
+    </div>
+  </header>
+
+  <div id="uploadBanner" hidden></div>
+
+  <section class="filters card">
+    <div class="filters-row">
+      <div class="filter-group">
+        <label>Rig ID</label>
+        <div class="chip-row" id="rigChips"></div>
+      </div>
+      <div class="filter-group">
+        <label>Rentang Waktu</label>
+        <div class="date-inputs">
+          <input type="date" id="startDate" />
+          <span>–</span>
+          <input type="date" id="endDate" />
+        </div>
+      </div>
+      <div class="filter-group">
+        <label>Preset</label>
+        <div class="chip-row">
+          <button class="chip" data-preset="24h" type="button">24 Jam</button>
+          <button class="chip" data-preset="3d" type="button">3 Hari</button>
+          <button class="chip" data-preset="7d" type="button">7 Hari</button>
+          <button class="chip" data-preset="all" type="button">Semua</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="kpi-grid" id="kpiGrid" aria-label="Panel KPI"></section>
+
+  <section class="grid-2">
+    <div class="card">
+      <h2>Tren Gabungan Sensor Operasional <span class="hint" id="focusRigLabel"></span></h2>
+      <div class="chart-toolbar">
+        <select id="focusRigSelect" aria-label="Rig untuk grafik tren"></select>
+        <div class="chip-row" id="paramChips"></div>
+      </div>
+      <div class="chart-canvas-wrap"><canvas id="trendChart"></canvas></div>
+      <p class="chart-footnote">Nilai dinormalisasi 0–100% dari rentang aktual masing-masing parameter (satu sumbu Y) agar sensor dengan satuan berbeda dapat dibandingkan tren-nya secara adil tanpa dual-axis. Arahkan kursor ke titik untuk melihat nilai asli. <span id="decimationNote"></span></p>
+    </div>
+
+    <div class="card">
+      <h2>Distribusi Status Operasional
+        <button class="btn" id="donutTableToggle" type="button" style="font-size:11px;padding:3px 9px;">Tampilkan tabel</button>
+      </h2>
+      <div class="donut-layout">
+        <div class="chart-canvas-wrap small" style="flex:1 1 200px;"><canvas id="donutChart"></canvas></div>
+        <div class="donut-legend" id="donutLegend"></div>
+      </div>
+      <div class="table-scroll" id="donutTableWrap" hidden></div>
+    </div>
+  </section>
+
+  <section class="card full-width">
+    <h2>Timeline Status Rig</h2>
+    <div id="timelineRoot"></div>
+    <div class="status-def-list" id="statusDefList"></div>
+    <details class="engine-explainer">
+      <summary>Bagaimana engine menentukan status ini?</summary>
+      <div id="engineExplainerBody" style="margin-top:8px; color:var(--text-secondary); font-size:12.5px;"></div>
+    </details>
+  </section>
+
+  <section class="card full-width">
+    <h2>Alert &amp; Log Kejadian Anomali Operasional <span class="hint" id="alertCountHint"></span></h2>
+    <div class="table-scroll">
+      <table class="alert-table" id="alertTable">
+        <thead>
+          <tr>
+            <th data-sort="rig">Rig ID</th>
+            <th data-sort="start">Mulai</th>
+            <th data-sort="end">Selesai</th>
+            <th data-sort="duration">Durasi</th>
+            <th data-sort="peakSpp">Peak SPP</th>
+            <th data-sort="peakTorque">Peak Torque</th>
+            <th data-sort="minWob">Min WOB</th>
+            <th>Kemungkinan Penyebab</th>
+            <th>Severity</th>
+          </tr>
+        </thead>
+        <tbody id="alertTableBody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="alertEmptyState" hidden>Tidak ada anomali kritikal pada rig/rentang waktu yang dipilih.</div>
+  </section>
+
+  <footer class="app-footer">
+    Data pada dashboard ini adalah <strong>data sample sintetis</strong> untuk keperluan demonstrasi teknis, bukan data lapangan aktual.
+    Chart rendering menggunakan <a href="https://www.chartjs.org/" target="_blank" rel="noopener">Chart.js</a> (MIT License, disematkan inline di file ini).
+  </footer>
+</div>
+
+<script>
+/*__CHARTJS_INLINE__*/
+</script>
+<script>
+/*__APP_JS__*/
+</script>
+</body>
+</html>
