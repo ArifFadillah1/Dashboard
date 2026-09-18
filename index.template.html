@@ -337,14 +337,18 @@
   <header class="app-header">
     <div>
       <h1>Rig Operational Status Dashboard</h1>
-      <p class="subtitle">Deteksi status operasional rig (Drilling, Circulating, Tripping In/Out, Idle/Standby, Critical Anomaly) berbasis rule-engine ambang batas parameter sensor pemboran.</p>
+      <p class="subtitle" data-i18n="subtitle">Deteksi status operasional rig (Drilling, Circulating, Tripping In/Out, Idle/Standby, Critical Anomaly) berbasis rule-engine ambang batas parameter sensor pemboran.</p>
     </div>
     <div class="header-actions">
-      <button class="btn" id="themeToggle" type="button" title="Ganti tema terang/gelap">🌓 Tema</button>
-      <button class="btn" id="downloadSampleBtn" type="button">⬇️ Unduh Contoh CSV</button>
+      <div class="chip-row" id="langChips" role="group" aria-label="Language">
+        <button class="chip" id="langId" type="button" aria-pressed="true">ID</button>
+        <button class="chip" id="langEn" type="button" aria-pressed="false">EN</button>
+      </div>
+      <button class="btn" id="themeToggle" type="button" title="Ganti tema terang/gelap" data-i18n="themeToggleBtn" data-i18n-title="themeToggleTip">🌓 Tema</button>
+      <button class="btn" id="downloadSampleBtn" type="button" data-i18n="downloadSampleBtn">⬇️ Unduh Contoh CSV</button>
       <label class="btn" for="csvInput">⬆️ Upload CSV</label>
       <input type="file" id="csvInput" accept=".csv,text/csv" />
-      <button class="btn" id="resetSampleBtn" type="button">↺ Reset ke Data Sample</button>
+      <button class="btn" id="resetSampleBtn" type="button" data-i18n="resetSampleBtn">↺ Reset ke Data Sample</button>
     </div>
   </header>
 
@@ -353,11 +357,11 @@
   <section class="filters card">
     <div class="filters-row">
       <div class="filter-group">
-        <label class="has-tip" title="Pilih satu atau lebih rig untuk ditampilkan. Semua chart & KPI akan otomatis menyesuaikan ke rig yang dipilih.">Rig ID</label>
+        <label class="has-tip" title="Pilih satu atau lebih rig untuk ditampilkan. Semua chart & KPI akan otomatis menyesuaikan ke rig yang dipilih." data-i18n-title="rigIdTip">Rig ID</label>
         <div class="chip-row" id="rigChips"></div>
       </div>
       <div class="filter-group">
-        <label class="has-tip" title="Batasi data yang ditampilkan ke rentang tanggal tertentu.">Rentang Waktu</label>
+        <label class="has-tip" title="Batasi data yang ditampilkan ke rentang tanggal tertentu." data-i18n="timeRangeLabel" data-i18n-title="timeRangeTip">Rentang Waktu</label>
         <div class="date-inputs">
           <input type="date" id="startDate" />
           <span>–</span>
@@ -365,12 +369,12 @@
         </div>
       </div>
       <div class="filter-group">
-        <label class="has-tip" title="Pilihan cepat untuk mengisi rentang tanggal di sebelah kiri.">Preset</label>
+        <label class="has-tip" title="Pilihan cepat untuk mengisi rentang tanggal di sebelah kiri." data-i18n="presetLabel" data-i18n-title="presetTip">Preset</label>
         <div class="chip-row">
-          <button class="chip has-tip" data-preset="24h" type="button" title="Tampilkan hanya 24 jam terakhir dari data.">24 Jam</button>
-          <button class="chip has-tip" data-preset="3d" type="button" title="Tampilkan hanya 3 hari terakhir dari data.">3 Hari</button>
-          <button class="chip has-tip" data-preset="7d" type="button" title="Tampilkan hanya 7 hari terakhir dari data.">7 Hari</button>
-          <button class="chip has-tip" data-preset="all" type="button" title="Tampilkan seluruh data tanpa batasan tanggal.">Semua</button>
+          <button class="chip has-tip" data-preset="24h" type="button" title="Tampilkan hanya 24 jam terakhir dari data." data-i18n="preset24h" data-i18n-title="preset24hTip">24 Jam</button>
+          <button class="chip has-tip" data-preset="3d" type="button" title="Tampilkan hanya 3 hari terakhir dari data." data-i18n="preset3d" data-i18n-title="preset3dTip">3 Hari</button>
+          <button class="chip has-tip" data-preset="7d" type="button" title="Tampilkan hanya 7 hari terakhir dari data." data-i18n="preset7d" data-i18n-title="preset7dTip">7 Hari</button>
+          <button class="chip has-tip" data-preset="all" type="button" title="Tampilkan seluruh data tanpa batasan tanggal." data-i18n="presetAll" data-i18n-title="presetAllTip">Semua</button>
         </div>
       </div>
     </div>
@@ -380,17 +384,17 @@
 
   <section class="grid-2">
     <div class="card">
-      <h2><span class="has-tip" title="Grafik garis waktu yang menampilkan beberapa parameter sensor sekaligus (WOB, RPM, Torque, dll.), dinormalisasi ke satu skala agar mudah dibandingkan.">Tren Gabungan Sensor Operasional</span> <span class="hint" id="focusRigLabel"></span></h2>
+      <h2><span class="has-tip" title="Grafik garis waktu yang menampilkan beberapa parameter sensor sekaligus (WOB, RPM, Torque, dll.), dinormalisasi ke satu skala agar mudah dibandingkan." data-i18n="trendHeading" data-i18n-title="trendHeadingTip">Tren Gabungan Sensor Operasional</span> <span class="hint" id="focusRigLabel"></span></h2>
       <div class="chart-toolbar">
-        <select id="focusRigSelect" aria-label="Rig untuk grafik tren"></select>
+        <select id="focusRigSelect" aria-label="Rig untuk grafik tren" data-i18n-aria="focusRigSelectAria"></select>
         <div class="chip-row" id="paramChips"></div>
       </div>
       <div class="chart-canvas-wrap"><canvas id="trendChart"></canvas></div>
-      <p class="chart-footnote">Nilai dinormalisasi 0–100% dari rentang aktual masing-masing parameter (satu sumbu Y) agar sensor dengan satuan berbeda dapat dibandingkan tren-nya secara adil tanpa dual-axis. Arahkan kursor ke titik untuk melihat nilai asli. <span id="decimationNote"></span></p>
+      <p class="chart-footnote"><span data-i18n="trendFootnote">Nilai dinormalisasi 0–100% dari rentang aktual masing-masing parameter (satu sumbu Y) agar sensor dengan satuan berbeda dapat dibandingkan tren-nya secara adil tanpa dual-axis. Arahkan kursor ke titik untuk melihat nilai asli.</span> <span id="decimationNote"></span></p>
     </div>
 
     <div class="card">
-      <h2><span class="has-tip" title="Diagram lingkaran yang menunjukkan proporsi waktu rig berada di setiap status operasional, pada rentang data yang sedang difilter.">Distribusi Status Operasional</span>
+      <h2><span class="has-tip" title="Diagram lingkaran yang menunjukkan proporsi waktu rig berada di setiap status operasional, pada rentang data yang sedang difilter." data-i18n="donutHeading" data-i18n-title="donutHeadingTip">Distribusi Status Operasional</span>
         <button class="btn" id="donutTableToggle" type="button" style="font-size:11px;padding:3px 9px;">Tampilkan tabel</button>
       </h2>
       <div class="donut-layout">
@@ -402,45 +406,45 @@
   </section>
 
   <section class="card full-width">
-    <h2>Timeline Status Rig</h2>
+    <h2 data-i18n="timelineHeading">Timeline Status Rig</h2>
     <div id="timelineRoot"></div>
     <div class="status-def-list" id="statusDefList"></div>
     <details class="engine-explainer">
-      <summary>Bagaimana engine menentukan status ini?</summary>
+      <summary data-i18n="engineExplainerSummary">Bagaimana engine menentukan status ini?</summary>
       <div id="engineExplainerBody" style="margin-top:8px; color:var(--text-secondary); font-size:12.5px;"></div>
     </details>
   </section>
 
   <section class="card full-width">
-    <h2>Alert &amp; Log Kejadian Anomali Operasional <span class="hint" id="alertCountHint"></span></h2>
+    <h2><span data-i18n="alertHeading">Alert &amp; Log Kejadian Anomali Operasional</span> <span class="hint" id="alertCountHint"></span></h2>
     <div class="filter-group" style="margin-bottom:10px;">
-      <label class="has-tip" title="Tampilkan hanya kejadian anomali dengan penyebab tertentu.">Filter Penyebab</label>
+      <label class="has-tip" title="Tampilkan hanya kejadian anomali dengan penyebab tertentu." data-i18n="causeFilterLabel" data-i18n-title="causeFilterTip">Filter Penyebab</label>
       <div class="chip-row" id="alertCauseChips"></div>
     </div>
     <div class="table-scroll">
       <table class="alert-table" id="alertTable">
         <thead>
           <tr>
-            <th data-sort="rig" class="has-tip" title="ID rig tempat anomali ini terjadi.">Rig ID</th>
-            <th data-sort="start" class="has-tip" title="Waktu anomali mulai terdeteksi.">Mulai</th>
-            <th data-sort="end" class="has-tip" title="Waktu anomali berakhir (kembali ke status normal).">Selesai</th>
-            <th data-sort="duration" class="has-tip" title="Berapa lama kejadian anomali ini berlangsung.">Durasi</th>
-            <th data-sort="peakSpp" class="has-tip" title="Standpipe Pressure (tekanan lumpur bor di pipa) tertinggi yang tercatat selama kejadian ini. Melonjak tinggi bisa jadi tanda tekanan balik dari formasi (kick).">Peak SPP</th>
-            <th data-sort="peakTorque" class="has-tip" title="Torque (gaya puntir saat memutar rangkaian bor) tertinggi yang tercatat selama kejadian ini. Melonjak tinggi bisa jadi tanda pipa terjepit.">Peak Torque</th>
-            <th data-sort="minWob" class="has-tip" title="Weight on Bit (tekanan mata bor ke dasar sumur) terendah yang tercatat selama kejadian ini.">Min WOB</th>
-            <th class="has-tip" title="Dugaan penyebab anomali berdasarkan pola sensor yang terekam.">Kemungkinan Penyebab</th>
-            <th class="has-tip" title="Tingkat keparahan kejadian.">Severity</th>
+            <th data-sort="rig" class="has-tip" title="ID rig tempat anomali ini terjadi." data-i18n-title="thRigIdTip">Rig ID</th>
+            <th data-sort="start" class="has-tip" title="Waktu anomali mulai terdeteksi." data-i18n="thMulai" data-i18n-title="thMulaiTip">Mulai</th>
+            <th data-sort="end" class="has-tip" title="Waktu anomali berakhir (kembali ke status normal)." data-i18n="thSelesai" data-i18n-title="thSelesaiTip">Selesai</th>
+            <th data-sort="duration" class="has-tip" title="Berapa lama kejadian anomali ini berlangsung." data-i18n="thDurasi" data-i18n-title="thDurasiTip">Durasi</th>
+            <th data-sort="peakSpp" class="has-tip" title="Standpipe Pressure (tekanan lumpur bor di pipa) tertinggi yang tercatat selama kejadian ini. Melonjak tinggi bisa jadi tanda tekanan balik dari formasi (kick)." data-i18n-title="thPeakSppTip">Peak SPP</th>
+            <th data-sort="peakTorque" class="has-tip" title="Torque (gaya puntir saat memutar rangkaian bor) tertinggi yang tercatat selama kejadian ini. Melonjak tinggi bisa jadi tanda pipa terjepit." data-i18n-title="thPeakTorqueTip">Peak Torque</th>
+            <th data-sort="minWob" class="has-tip" title="Weight on Bit (tekanan mata bor ke dasar sumur) terendah yang tercatat selama kejadian ini." data-i18n-title="thMinWobTip">Min WOB</th>
+            <th class="has-tip" title="Dugaan penyebab anomali berdasarkan pola sensor yang terekam." data-i18n="thPenyebab" data-i18n-title="thPenyebabTip">Kemungkinan Penyebab</th>
+            <th class="has-tip" title="Tingkat keparahan kejadian." data-i18n-title="thSeverityTip">Severity</th>
           </tr>
         </thead>
         <tbody id="alertTableBody"></tbody>
       </table>
     </div>
-    <div class="empty-state" id="alertEmptyState" hidden>Tidak ada anomali kritikal pada rig/rentang waktu yang dipilih.</div>
+    <div class="empty-state" id="alertEmptyState" hidden data-i18n="alertEmptyState">Tidak ada anomali kritikal pada rig/rentang waktu yang dipilih.</div>
   </section>
 
   <footer class="app-footer">
-    Dataset bawaan adalah <strong>data telemetri riil</strong> (di-resample ke interval 1 menit); identitas rig tidak disertakan pada sumber data asli.
-    Chart rendering menggunakan <a href="https://www.chartjs.org/" target="_blank" rel="noopener">Chart.js</a> (MIT License, disematkan inline di file ini).
+    <span data-i18n="footer1">Dataset bawaan adalah <strong>data telemetri riil</strong> (di-resample ke interval 1 menit); identitas rig tidak disertakan pada sumber data asli.</span>
+    <span data-i18n="footer2">Chart rendering menggunakan <a href="https://www.chartjs.org/" target="_blank" rel="noopener">Chart.js</a> (MIT License, disematkan inline di file ini).</span>
   </footer>
 </div>
 
