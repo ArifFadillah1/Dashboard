@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds the single-file index.html deliverable.
+"""Builds the single-file index.html app.
 
 Inlines assets/vendor/chart.umd.min.js and assets/app.src.js into
 index.template.html, replacing the two placeholder markers. This keeps the

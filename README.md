@@ -6,8 +6,6 @@ Dashboard interaktif untuk mendeteksi dan memvisualisasikan **status operasional
 
 Dibangun sebagai **single-file HTML** yang bisa langsung dibuka di browser tanpa instalasi apa pun.
 
-> Dibuat sebagai bagian dari technical test posisi **Junior Performance Engineer** — Pertamina.
-
 ---
 
 ## Cara Kerjanya (Ringkas)
@@ -29,7 +27,7 @@ Dashboard menampilkan ini sebagai grafik tren, timeline Gantt per status, KPI ri
 
 ## Dataset
 
-Dataset bawaan (default) adalah **data telemetri riil** dari case-study data pack yang diberikan untuk technical test ini (`realtime_rig_telemetry.csv`), bukan data sintetis. Karena file sumber mencatat pembacaan setiap ~1,5–2 detik (30–50 baris/menit) namun timestamp hanya presisi menit, dashboard me-resample data ke **1 baris per menit** — mengambil pembacaan terakhir dalam menit tersebut sebagai representasi (asumsi: urutan baris dalam satu menit mencerminkan urutan kedatangan data). Identitas rig tidak ada pada file sumber, sehingga ditampilkan sebagai satu label generik.
+Dataset bawaan (default) adalah **data telemetri riil** (`realtime_rig_telemetry.csv`), bukan data sintetis. Karena file sumber mencatat pembacaan setiap ~1,5–2 detik (30–50 baris/menit) namun timestamp hanya presisi menit, dashboard me-resample data ke **1 baris per menit** — mengambil pembacaan terakhir dalam menit tersebut sebagai representasi (asumsi: urutan baris dalam satu menit mencerminkan urutan kedatangan data). Identitas rig tidak ada pada file sumber, sehingga ditampilkan sebagai satu label generik.
 
 Anda bisa mengunggah CSV Anda sendiri — lihat format di bawah.
 
@@ -88,7 +86,7 @@ Engine mengevaluasi setiap baris **secara berurutan sesuai prioritas** (baris pe
 
 ```
 rig-status-dashboard/
-├── index.html                 # ⭐ DELIVERABLE UTAMA — buka file ini di browser, tanpa instalasi
+├── index.html                 # ⭐ FILE UTAMA — buka file ini di browser, tanpa instalasi
 ├── index.template.html        # Template sumber HTML/CSS + 2 placeholder skrip (untuk maintainability)
 ├── assets/
 │   ├── app.src.js             # Sumber JavaScript aplikasi (readable, di-inline ke index.html saat build)
@@ -97,8 +95,8 @@ rig-status-dashboard/
 ├── scripts/
 │   └── build.py                # Script build: menggabungkan template + app.src.js + chart.umd.min.js → index.html
 ├── docs/
-│   ├── technical-summary.md   # Ringkasan pendekatan & keputusan teknis (deliverable #3)
-│   └── reflection.md          # 3 poin refleksi pengembangan lanjutan (deliverable #4)
+│   ├── technical-summary.md   # Ringkasan pendekatan & keputusan teknis
+│   └── reflection.md          # Poin refleksi pengembangan lanjutan
 └── README.md
 ```
 
@@ -117,4 +115,4 @@ untuk meregenerasi `index.html`. Build ini murni bersifat opsional/developer-con
 ## Lisensi & Atribusi
 
 - Chart rendering menggunakan [Chart.js](https://www.chartjs.org/) v4.4.4 (MIT License), disematkan langsung di dalam `index.html`.
-- Dataset bawaan adalah data telemetri riil dari case-study data pack yang diberikan untuk technical test ini, di-resample ke interval 1 menit untuk keperluan demonstrasi.
+- Dataset bawaan adalah data telemetri riil, di-resample ke interval 1 menit untuk keperluan demonstrasi.

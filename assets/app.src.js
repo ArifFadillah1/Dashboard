@@ -168,7 +168,7 @@
    * ====================================================================== */
   const CSV_HEADERS = ["Date time server", "Bit Depth (ftMD)", "Hole Depth (ftMD)", "Block Position (ft)", "ROP (ft/h)", "Hookload (klb)", "WOB (klb)", "Rotary Torque (kft-lb)", "Surface RPM", "Standpipe Pressure (psi)", "Mud Flow Out %", "Mud Flow In (gpm)"];
   // Header matching is tolerant of unit suffixes in parentheses/percent signs (e.g. "Bit Depth (ftMD)" -> "bit depth"),
-  // so the real case-study export and simpler hand-made CSVs both work without renaming columns.
+  // so real telemetry exports and simpler hand-made CSVs both work without renaming columns.
   function normalizeHeader(h) {
     return h.toLowerCase().replace(/\([^)]*\)/g, "").replace(/%/g, "").trim().replace(/\s+/g, " ");
   }
@@ -211,8 +211,8 @@
   }
 
   /** Groups raw rows sharing the same (rig, minute-precision timestamp) into a
-   *  single sample, keeping the LAST reading of that minute (per the case-study's
-   *  stated assumption that within-minute row order reflects arrival order).
+   *  single sample, keeping the LAST reading of that minute (assumes that
+   *  within-minute row order reflects arrival order).
    *  Rows already logged at >= 1-minute intervals pass through unchanged, since
    *  each gets its own bucket — no special-casing needed for either data shape. */
   function bucketToMinute(rows) {
@@ -275,7 +275,7 @@
   /* =========================================================================
    * 3. APP STATE
    * ====================================================================== */
-  // Minute-resampled excerpt of the real telemetry provided in the case-study data pack
+  // Minute-resampled excerpt of real drilling telemetry
   // (see scripts/csv_sample.py for the analysis that grounded the thresholds above).
   // Rig identity is not present in the source file, so it's labeled generically below.
   const EMBEDDED_SAMPLE_CSV = `Date time server,Bit Depth (ftMD),Hole Depth (ftMD),Block Position (ft),ROP (ft/h),Hookload (klb),WOB (klb),Rotary Torque (kft-lb),Surface RPM,Standpipe Pressure (psi),Mud Flow Out %,Mud Flow In (gpm)
@@ -7660,7 +7660,7 @@
     endDate: null,
     focusRig: null,
     visibleParams: new Set(["wob", "spp", "bitDepth"]),
-    sourceLabel: "Sampel Data Riil (Case Study Pack)",
+    sourceLabel: "Sampel Data Riil (Bawaan)",
     sortCol: "start",
     sortDir: "desc",
     intervalHours: 1 / 60,
@@ -8143,7 +8143,7 @@
       downloadBlob("sample_rig_data.csv", serializeCsv(SAMPLE_ROWS));
     });
     document.getElementById("resetSampleBtn").addEventListener("click", () => {
-      loadDataset(SAMPLE_ROWS, "Sampel Data Riil (Case Study Pack)");
+      loadDataset(SAMPLE_ROWS, "Sampel Data Riil (Bawaan)");
       document.getElementById("uploadBanner").hidden = true;
     });
     document.getElementById("themeToggle").addEventListener("click", () => {

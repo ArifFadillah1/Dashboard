@@ -6,8 +6,6 @@ An interactive dashboard that detects and visualizes **upstream drilling rig ope
 
 Built as a **single-file HTML** app that opens directly in a browser — no installation required.
 
-> Built as part of the **Junior Performance Engineer** technical test — Pertamina.
-
 ---
 
 ## How It Works (Summary)
@@ -29,7 +27,7 @@ The dashboard presents this as a trend chart, a per-status Gantt timeline, summa
 
 ## Dataset
 
-The default dataset is **real telemetry data** from the case-study data pack provided for this technical test (`realtime_rig_telemetry.csv`), not synthetic data. Because the source file logs a reading every ~1.5–2 seconds (30–50 rows/minute) but timestamps are only minute-precision, the dashboard resamples the data to **1 row per minute** — taking the last reading within that minute as the representative value (assumption: row order within a minute reflects arrival order). Rig identity is not present in the source file, so it's shown as a single generic label.
+The default dataset is **real telemetry data** (`realtime_rig_telemetry.csv`), not synthetic data. Because the source file logs a reading every ~1.5–2 seconds (30–50 rows/minute) but timestamps are only minute-precision, the dashboard resamples the data to **1 row per minute** — taking the last reading within that minute as the representative value (assumption: row order within a minute reflects arrival order). Rig identity is not present in the source file, so it's shown as a single generic label.
 
 You can upload your own CSV — see the format below.
 
@@ -88,7 +86,7 @@ The engine evaluates each row **in priority order** (the first matching rule det
 
 ```
 rig-status-dashboard/
-├── index.html                 # ⭐ MAIN DELIVERABLE — open this file in a browser, no install needed
+├── index.html                 # ⭐ MAIN FILE — open this file in a browser, no install needed
 ├── index.template.html        # Source HTML/CSS template + 2 script placeholders (for maintainability)
 ├── assets/
 │   ├── app.src.js             # App JavaScript source (readable, inlined into index.html at build time)
@@ -97,8 +95,8 @@ rig-status-dashboard/
 ├── scripts/
 │   └── build.py                # Build script: merges template + app.src.js + chart.umd.min.js → index.html
 ├── docs/
-│   ├── technical-summary.md   # Technical approach & decisions summary (deliverable #3)
-│   └── reflection.md          # 3 reflection points on further development (deliverable #4)
+│   ├── technical-summary.md   # Technical approach & decisions summary
+│   └── reflection.md          # Reflection points on further development
 └── README.md
 ```
 
@@ -117,4 +115,4 @@ to regenerate `index.html`. This build step is purely an optional developer conv
 ## License & Attribution
 
 - Chart rendering uses [Chart.js](https://www.chartjs.org/) v4.4.4 (MIT License), embedded directly inside `index.html`.
-- The default dataset is real telemetry data from the case-study data pack provided for this technical test, resampled to a 1-minute interval for demonstration purposes.
+- The default dataset is real telemetry data, resampled to a 1-minute interval for demonstration purposes.

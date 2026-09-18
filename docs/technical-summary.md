@@ -4,7 +4,7 @@
 
 Dashboard dibangun sebagai **single-file, client-side application** (HTML + CSS + vanilla JavaScript, dengan Chart.js v4.4.4 disematkan inline) — tanpa framework, tanpa build step wajib, dan tanpa dependency eksternal apa pun saat runtime.
 
-Pilihan ini didasarkan pada tiga pertimbangan utama sesuai konteks technical test:
+Pilihan ini didasarkan pada tiga pertimbangan utama:
 
 - **Kemudahan demonstrasi & evaluasi.** Reviewer dapat langsung membuka `index.html` dengan double-click, tanpa perlu `npm install`, server, atau koneksi internet — menghilangkan friksi "it doesn't run on my machine".
 - **Portabilitas.** Satu file HTML dapat dikirim via email/USB/chat dan tetap berfungsi identik di semua platform (Windows/macOS/Linux) dan semua browser modern, relevan untuk lingkungan lapangan migas yang sering memiliki akses internet terbatas.
@@ -21,7 +21,7 @@ Setiap baris data sensor diklasifikasikan melalui **rangkaian aturan ambang bata
 5. **Connection** — jeda singkat menyambung/melepas pipa: bukan Tripping, flow & WOB rendah, namun Hookload berubah tajam antar sampel (≥ 5 klbs).
 6. **Idle/Standby** — status default ketika tidak ada kondisi di atas terpenuhi.
 
-**Catatan implementasi penting:** data mentah pada case-study data pack dicatat pada interval tidak beraturan (~1,5–2 detik, 30–50 baris/menit) tetapi timestamp hanya presisi menit, sehingga `parseCsv` melakukan resampling ke **1 baris per menit** (mengambil pembacaan terakhir dalam menit tersebut) sebelum klasifikasi. Interval sampling dataset kemudian diinferensikan otomatis dari median selisih timestamp antar baris (`inferIntervalHours`), bukan diasumsikan konstan — memastikan perhitungan KPI dan threshold rate-based (Tripping) tetap akurat baik untuk dataset riil bawaan (1 menit) maupun CSV yang diunggah pengguna dengan frekuensi logging berbeda. Variansi torque intra-menit (sinyal potensial untuk deteksi stick-slip) hilang saat resampling — ini dicatat sebagai batasan yang disengaja, bukan diselesaikan dengan menambah engine deteksi baru di luar cakupan inti.
+**Catatan implementasi penting:** data mentah yang disediakan dicatat pada interval tidak beraturan (~1,5–2 detik, 30–50 baris/menit) tetapi timestamp hanya presisi menit, sehingga `parseCsv` melakukan resampling ke **1 baris per menit** (mengambil pembacaan terakhir dalam menit tersebut) sebelum klasifikasi. Interval sampling dataset kemudian diinferensikan otomatis dari median selisih timestamp antar baris (`inferIntervalHours`), bukan diasumsikan konstan — memastikan perhitungan KPI dan threshold rate-based (Tripping) tetap akurat baik untuk dataset riil bawaan (1 menit) maupun CSV yang diunggah pengguna dengan frekuensi logging berbeda. Variansi torque intra-menit (sinyal potensial untuk deteksi stick-slip) hilang saat resampling — ini dicatat sebagai batasan yang disengaja, bukan diselesaikan dengan menambah engine deteksi baru di luar cakupan inti.
 
 Threshold Torque dikalibrasi terhadap distribusi persentil nilai riil (bukan label satuan pada header, yang tampak tidak konsisten dengan skala nilainya — lihat catatan di [README](../README.md#matriks-klasifikasi-status-rig)); threshold lain dipilih dari rentang parameter operasi pemboran yang umum dan pola dataset riil. Pada implementasi produksi nilai ini sebaiknya dikonfigurasi per rig/formasi menggunakan data historis (lihat matriks lengkap di [README](../README.md#matriks-klasifikasi-status-rig)).
 
