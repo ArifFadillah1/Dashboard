@@ -1,3 +1,5 @@
+🇮🇩 Bahasa Indonesia (halaman ini) | 🇬🇧 [English](README.en.md)
+
 # Rig Operational Status Dashboard
 
 Dashboard interaktif untuk mendeteksi dan memvisualisasikan **status operasional rig pemboran hulu migas** dari data sensor pemboran (drilling parameters), menggunakan rule-based logic engine berbasis ambang batas (threshold).
