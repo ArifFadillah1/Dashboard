@@ -13,7 +13,7 @@
   }
   function locale() { return state.lang === "en" ? "en-US" : "id-ID"; }
   function fmtNum(v, d) { return Number(v).toLocaleString(locale(), { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
-  function escapeAttr(s) { return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;"); }
+  function escapeAttr(s) { return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
   function fmtDateTime(d) {
     return d.toLocaleString(locale(), { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
   }
@@ -27,6 +27,10 @@
     const p = (n) => String(n).padStart(2, "0");
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
   }
+  /** Parses a date-input value ("YYYY-MM-DD") as LOCAL midnight. A bare date string
+   *  passed to new Date() parses as UTC midnight, which would shift the filter
+   *  boundary by the timezone offset relative to the locally-parsed data timestamps. */
+  function parseInputDate(value) { return new Date(value + "T00:00:00"); }
   function downloadBlob(filename, content, mime) {
     const blob = new Blob([content], { type: mime || "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -44,6 +48,17 @@
     for (let i = 0; i < rows.length; i += step) out.push(rows[i]);
     if (out[out.length - 1] !== rows[rows.length - 1]) out.push(rows[rows.length - 1]);
     return { rows: out, step };
+  }
+  /** Min/max timestamp over rows in a single pass — spreading into Math.min/max
+   *  (Math.min(...arr)) overflows the call stack on large uploads (~125k+ rows). */
+  function tsExtent(rows) {
+    let min = Infinity, max = -Infinity;
+    for (const r of rows) {
+      const t = r.ts.getTime();
+      if (t < min) min = t;
+      if (t > max) max = t;
+    }
+    return { min, max };
   }
   /** Groups consecutive rows (already sorted by ts within a rig) that share the
    *  same classification into contiguous segments — used by both the status
@@ -263,7 +278,9 @@
       });
     }
     if (!rows.length) throw new Error(tr({ id: "Tidak ada baris data valid yang dapat diproses.", en: "No valid data rows could be processed." }));
-    const bucketed = bucketToMinute(rows);
+    // Sort chronologically once so every downstream consumer (KPI "latest status"
+    // per rig, timeline, alerts) can rely on row order even for unordered CSVs.
+    const bucketed = bucketToMinute(rows).sort((a, b) => a.ts - b.ts);
     return classifySeries(bucketed, inferIntervalHours(bucketed));
   }
 
@@ -7713,9 +7730,9 @@
 
   function resetFiltersToFullRange() {
     state.selectedRigs = new Set(state.rigs);
-    const ts = state.rows.map((r) => r.ts.getTime());
-    state.startDate = new Date(Math.min(...ts));
-    state.endDate = new Date(Math.max(...ts));
+    const ext = tsExtent(state.rows);
+    state.startDate = new Date(ext.min);
+    state.endDate = new Date(ext.max);
     state.focusRig = state.rigs[0] || null;
     state.intervalHours = inferIntervalHours(state.rows);
   }
@@ -7741,6 +7758,16 @@
 
   let trendChart = null;
   let donutChart = null;
+
+  /** Destroys the existing chart instances (releasing Chart.js registry entries and
+   *  ResizeObservers) and re-reads theme-dependent defaults from CSS variables.
+   *  fullRender() recreates the charts on the same canvases afterwards. */
+  function resetCharts() {
+    if (trendChart) { trendChart.destroy(); trendChart = null; }
+    if (donutChart) { donutChart.destroy(); donutChart = null; }
+    Chart.defaults.color = cssVar("--text-secondary");
+    Chart.defaults.borderColor = cssVar("--gridline");
+  }
 
   function renderTrendChart() {
     const rowsAll = getFocusRows();
@@ -7899,7 +7926,7 @@
         div.style.width = width + "%";
         div.style.background = cssVar(statusColorVar(seg.key));
         const durHrs = seg.rows.length * state.intervalHours;
-        div.addEventListener("mouseenter", (ev) => showTimelineTooltip(ev, `<strong>${seg.key}</strong><br>${STATUS_DEFS[seg.key] ? tr(STATUS_DEFS[seg.key]) : ""}<br>${rig} · ${fmtDateTime(seg.start)} – ${fmtDateTime(seg.end)}<br>${tr({ id: "Durasi", en: "Duration" })}: ${fmtNum(durHrs, 2)} ${tr({ id: "jam", en: "hr" })}`));
+        div.addEventListener("mouseenter", (ev) => showTimelineTooltip(ev, `<strong>${seg.key}</strong><br>${STATUS_DEFS[seg.key] ? tr(STATUS_DEFS[seg.key]) : ""}<br>${escapeAttr(rig)} · ${fmtDateTime(seg.start)} – ${fmtDateTime(seg.end)}<br>${tr({ id: "Durasi", en: "Duration" })}: ${fmtNum(durHrs, 2)} ${tr({ id: "jam", en: "hr" })}`));
         div.addEventListener("mousemove", moveTimelineTooltip);
         div.addEventListener("mouseleave", hideTimelineTooltip);
         track.appendChild(div);
@@ -8035,7 +8062,7 @@
 
     tbody.innerHTML = alerts.map((a) => `
       <tr>
-        <td>${a.rig}</td>
+        <td>${escapeAttr(a.rig)}</td>
         <td class="tabular">${fmtDateTime(a.start)}</td>
         <td class="tabular">${fmtDateTime(a.end)}</td>
         <td class="tabular">${fmtNum(a.duration, 2)} ${tr({ id: "j", en: "hr" })}</td>
@@ -8060,7 +8087,7 @@
       chip.title = tr({ id: `Tampilkan/sembunyikan data dari rig "${rig}". Klik untuk mengaktifkan atau menonaktifkan filter ini.`,
                         en: `Show/hide data from rig "${rig}". Click to toggle this filter on or off.` });
       const dotColors = ["--s1-blue", "--s2-orange", "--s3-aqua", "--s5-magenta", "--s7-violet"];
-      chip.innerHTML = `<span class="dot" style="background:${cssVar(dotColors[i % dotColors.length])}"></span>${rig}`;
+      chip.innerHTML = `<span class="dot" style="background:${cssVar(dotColors[i % dotColors.length])}"></span>${escapeAttr(rig)}`;
       chip.addEventListener("click", () => {
         if (state.selectedRigs.has(rig)) state.selectedRigs.delete(rig); else state.selectedRigs.add(rig);
         renderRigChips(); syncFocusRigSelect(); scheduleRender();
@@ -8072,7 +8099,7 @@
   function syncFocusRigSelect() {
     const sel = document.getElementById("focusRigSelect");
     const selected = [...state.selectedRigs].sort();
-    sel.innerHTML = selected.map((r) => `<option value="${r}">${r}</option>`).join("");
+    sel.innerHTML = selected.map((r) => `<option value="${escapeAttr(r)}">${escapeAttr(r)}</option>`).join("");
     if (!selected.includes(state.focusRig)) state.focusRig = selected[0] || null;
     sel.value = state.focusRig || "";
   }
@@ -8114,10 +8141,10 @@
 
   function bindFilterControls() {
     document.getElementById("startDate").addEventListener("change", debounce((e) => {
-      state.startDate = new Date(e.target.value); scheduleRender();
+      state.startDate = parseInputDate(e.target.value); scheduleRender();
     }, 150));
     document.getElementById("endDate").addEventListener("change", debounce((e) => {
-      state.endDate = new Date(e.target.value); scheduleRender();
+      state.endDate = parseInputDate(e.target.value); scheduleRender();
     }, 150));
     document.getElementById("focusRigSelect").addEventListener("change", (e) => {
       state.focusRig = e.target.value; renderTrendChart();
@@ -8125,8 +8152,9 @@
     document.querySelectorAll("[data-preset]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const preset = btn.dataset.preset;
-        const dataEnd = new Date(Math.max(...state.rows.filter(r=>state.selectedRigs.has(r.rig)).map((r) => r.ts.getTime())));
-        const dataStart = new Date(Math.min(...state.rows.filter(r=>state.selectedRigs.has(r.rig)).map((r) => r.ts.getTime())));
+        const ext = tsExtent(state.rows.filter((r) => state.selectedRigs.has(r.rig)));
+        const dataStart = new Date(ext.min);
+        const dataEnd = new Date(ext.max);
         if (preset === "all") { state.startDate = dataStart; state.endDate = dataEnd; }
         else {
           const days = preset === "24h" ? 1 : preset === "3d" ? 3 : 7;
@@ -8201,11 +8229,7 @@
       const current = root.getAttribute("data-theme");
       const next = current === "dark" ? "light" : current === "light" ? null : (matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "dark");
       if (next) root.setAttribute("data-theme", next); else root.removeAttribute("data-theme");
-      Chart.defaults.color = cssVar("--text-secondary");
-      Chart.defaults.borderColor = cssVar("--gridline");
-      trendChart = null; donutChart = null;
-      document.getElementById("trendChart").replaceWith(Object.assign(document.createElement("canvas"), { id: "trendChart" }));
-      document.getElementById("donutChart").replaceWith(Object.assign(document.createElement("canvas"), { id: "donutChart" }));
+      resetCharts();
       fullRender();
     });
     document.getElementById("langId").addEventListener("click", () => setLanguage("id"));
@@ -8283,11 +8307,7 @@
     document.documentElement.lang = lang;
     document.getElementById("langId").setAttribute("aria-pressed", lang === "id");
     document.getElementById("langEn").setAttribute("aria-pressed", lang === "en");
-    Chart.defaults.color = cssVar("--text-secondary");
-    Chart.defaults.borderColor = cssVar("--gridline");
-    trendChart = null; donutChart = null;
-    document.getElementById("trendChart").replaceWith(Object.assign(document.createElement("canvas"), { id: "trendChart" }));
-    document.getElementById("donutChart").replaceWith(Object.assign(document.createElement("canvas"), { id: "donutChart" }));
+    resetCharts();
     applyStaticTranslations();
     renderRigChips();
     renderParamChips();
