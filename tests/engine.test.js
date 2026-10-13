@@ -203,6 +203,29 @@ test("decimate: passthrough under the cap; keeps first and last point above it",
   assert.equal(rows[rows.length - 1].i, 999);
 });
 
+test("groupConsecutive: maxGapMs splits a same-key run across a data gap", () => {
+  const t = (m) => new Date(1700000000000 + m * 60000);
+  const rows = [
+    { rig: "R1", ts: t(0), status: "A" }, { rig: "R1", ts: t(1), status: "A" },
+    { rig: "R1", ts: t(3), status: "A" },  // 2-min gap: within the 2x tolerance
+    { rig: "R1", ts: t(60), status: "A" }, // 57-min gap: must start a new segment
+  ];
+  const noSplit = E.groupConsecutive(rows, (r) => r.status);
+  assert.equal(noSplit.length, 1); // omitted maxGapMs keeps the old merge-everything behavior
+  const segs = E.groupConsecutive(rows, (r) => r.status, 2 * 60000);
+  assert.deepEqual(segs.map((s) => s.rows.length), [3, 1]);
+  assert.equal(segs[0].end.getTime(), t(3).getTime());
+  assert.equal(segs[1].start.getTime(), t(60).getTime());
+});
+
+test("parseCsv: skippedRows property reports rows dropped for invalid timestamps", () => {
+  const ok = E.parseCsv(HDR + "\n2026-01-01T10:00:00,0,0,0,0,0,100,100\n", "X");
+  assert.equal(ok.skippedRows, 0);
+  const some = E.parseCsv(HDR + "\n2026-01-01T10:00:00,0,0,0,0,0,100,100\nbogus,0,0,0,0,0,1,1\n??,0,0,0,0,0,1,1\n", "X");
+  assert.equal(some.length, 1);
+  assert.equal(some.skippedRows, 2);
+});
+
 test("groupConsecutive: merges runs sharing a key into segments", () => {
   const t = (m) => new Date(1700000000000 + m * 60000);
   const rows = [

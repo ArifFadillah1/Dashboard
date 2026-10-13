@@ -56,13 +56,17 @@
 
   /** Groups consecutive rows (already sorted by ts within a rig) that share the
    *  same classification into contiguous segments — used by both the status
-   *  timeline and the anomaly log table. */
-  function groupConsecutive(rows, keyFn) {
+   *  timeline and the anomaly log table.
+   *  `maxGapMs` (optional): a new segment is started when the time gap to the
+   *  previous row exceeds it, so segments never visually span holes in the data;
+   *  omitted = no gap splitting (merge regardless of gaps). */
+  function groupConsecutive(rows, keyFn, maxGapMs) {
+    const gapLimit = maxGapMs == null ? Infinity : maxGapMs;
     const segs = [];
     for (const r of rows) {
       const k = keyFn(r);
       const last = segs[segs.length - 1];
-      if (last && last.key === k) {
+      if (last && last.key === k && r.ts - last.end <= gapLimit) {
         last.rows.push(r);
         last.end = r.ts;
       } else {
@@ -245,10 +249,11 @@
       colIndex[field] = idx;
     }
     const rows = [];
+    let skipped = 0;
     for (let i = 1; i < lines.length; i++) {
       const cells = parseCsvLine(lines[i]);
       const ts = new Date(cells[colIndex.ts]);
-      if (isNaN(ts.getTime())) continue;
+      if (isNaN(ts.getTime())) { skipped++; continue; }
       rows.push({
         ts, rig: colIndex.rig === -1 ? defaultRig : String(cells[colIndex.rig] || defaultRig).trim(),
         wob: parseFloat(cells[colIndex.wob]) || 0,
@@ -268,7 +273,11 @@
     // Sort chronologically once so every downstream consumer (KPI "latest status"
     // per rig, timeline, alerts) can rely on row order even for unordered CSVs.
     const bucketed = bucketToMinute(rows).sort((a, b) => a.ts - b.ts);
-    return classifySeries(bucketed, inferIntervalHours(bucketed));
+    const result = classifySeries(bucketed, inferIntervalHours(bucketed));
+    // Carried as a property so callers can report dropped lines without
+    // changing the return shape for every consumer of the rows array.
+    result.skippedRows = skipped;
+    return result;
   }
 
   function serializeCsv(rows) {

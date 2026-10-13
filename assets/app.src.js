@@ -34,6 +34,13 @@
     const p = (n) => String(n).padStart(2, "0");
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
   }
+  /** Local midnight of the given date. The date-range state is kept at day
+   *  granularity so it always matches what the <input type="date"> pickers
+   *  display (they cannot express a time-of-day). */
+  function startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  /** Segments merge across missing samples up to this gap; beyond it the
+   *  timeline/alert log starts a new segment instead of spanning the data hole. */
+  function segmentMaxGapMs() { return state.intervalHours * 3600 * 1000 * 2; }
   function downloadBlob(filename, content, mime) {
     const blob = new Blob([content], { type: mime || "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -161,8 +168,8 @@
   function resetFiltersToFullRange() {
     state.selectedRigs = new Set(state.rigs);
     const ext = tsExtent(state.rows);
-    state.startDate = new Date(ext.min);
-    state.endDate = new Date(ext.max);
+    state.startDate = startOfDay(new Date(ext.min));
+    state.endDate = startOfDay(new Date(ext.max));
     state.focusRig = state.rigs[0] || null;
     state.intervalHours = inferIntervalHours(state.rows);
   }
@@ -336,7 +343,7 @@
     for (const rig of rigsSorted) {
       const rows = filteredRows.filter((r) => r.rig === rig).sort((a, b) => a.ts - b.ts);
       if (!rows.length) continue;
-      const segs = groupConsecutive(rows, (r) => r.status);
+      const segs = groupConsecutive(rows, (r) => r.status, segmentMaxGapMs());
 
       const rowEl = document.createElement("div");
       rowEl.className = "timeline-rig-row";
@@ -450,7 +457,7 @@
     for (const r of filteredRows) (byRig[r.rig] = byRig[r.rig] || []).push(r);
     for (const rig in byRig) {
       const rows = byRig[rig].sort((a, b) => a.ts - b.ts);
-      const segs = groupConsecutive(rows, (r) => r.status).filter((s) => s.key.startsWith("Critical"));
+      const segs = groupConsecutive(rows, (r) => r.status, segmentMaxGapMs()).filter((s) => s.key.startsWith("Critical"));
       for (const seg of segs) {
         const peakSpp = Math.max(...seg.rows.map((r) => r.spp));
         const peakTorque = Math.max(...seg.rows.map((r) => r.torque));
@@ -585,11 +592,15 @@
         const ext = tsExtent(state.rows.filter((r) => state.selectedRigs.has(r.rig)));
         const dataStart = new Date(ext.min);
         const dataEnd = new Date(ext.max);
-        if (preset === "all") { state.startDate = dataStart; state.endDate = dataEnd; }
+        // Normalize to local-midnight day boundaries so the state matches what
+        // the day-granular date pickers display (endDate's day is included in
+        // full by getFilteredRows): "24h"/"3d"/"7d" = the last 1/3/7 calendar
+        // days of the data.
+        if (preset === "all") { state.startDate = startOfDay(dataStart); state.endDate = startOfDay(dataEnd); }
         else {
           const days = preset === "24h" ? 1 : preset === "3d" ? 3 : 7;
-          state.startDate = new Date(dataEnd.getTime() - days * 24 * 3600 * 1000);
-          state.endDate = dataEnd;
+          state.startDate = startOfDay(new Date(dataEnd.getTime() - (days - 1) * 24 * 3600 * 1000));
+          state.endDate = startOfDay(dataEnd);
         }
         syncDateInputs(); scheduleRender();
       });
@@ -638,8 +649,12 @@
           const defaultRig = file.name.replace(/\.[^.]+$/, "");
           const rows = parseCsv(reader.result, defaultRig);
           loadDataset(rows, `Upload: ${file.name}`);
+          const skippedNote = rows.skippedRows
+            ? tr({ id: ` ${rows.skippedRows} baris dilewati karena timestamp tidak valid.`,
+                   en: ` ${rows.skippedRows} row(s) skipped due to invalid timestamps.` })
+            : "";
           showBanner(tr({ id: `Berhasil memuat ${rows.length} baris dari ${state.rigs.length} rig (${file.name}).`,
-                          en: `Successfully loaded ${rows.length} rows from ${state.rigs.length} rig(s) (${file.name}).` }), "ok");
+                          en: `Successfully loaded ${rows.length} rows from ${state.rigs.length} rig(s) (${file.name}).` }) + skippedNote, "ok");
         } catch (err) {
           const detail = err.i18n ? tr(err.i18n) : err.message;
           showBanner(tr({ id: `Gagal memproses CSV: ${detail}`, en: `Failed to process CSV: ${detail}` }), "error");
@@ -683,12 +698,12 @@
     timeRangeTip: { id: "Batasi data yang ditampilkan ke rentang tanggal tertentu.", en: "Limit the displayed data to a specific date range." },
     presetLabel: { id: "Preset", en: "Preset" },
     presetTip: { id: "Pilihan cepat untuk mengisi rentang tanggal di sebelah kiri.", en: "Quick shortcuts to fill in the date range on the left." },
-    preset24h: { id: "24 Jam", en: "24 Hours" },
-    preset24hTip: { id: "Tampilkan hanya 24 jam terakhir dari data.", en: "Show only the last 24 hours of data." },
+    preset24h: { id: "1 Hari", en: "1 Day" },
+    preset24hTip: { id: "Tampilkan hanya hari kalender terakhir dari data.", en: "Show only the last calendar day of the data." },
     preset3d: { id: "3 Hari", en: "3 Days" },
-    preset3dTip: { id: "Tampilkan hanya 3 hari terakhir dari data.", en: "Show only the last 3 days of data." },
+    preset3dTip: { id: "Tampilkan hanya 3 hari kalender terakhir dari data.", en: "Show only the last 3 calendar days of the data." },
     preset7d: { id: "7 Hari", en: "7 Days" },
-    preset7dTip: { id: "Tampilkan hanya 7 hari terakhir dari data.", en: "Show only the last 7 days of data." },
+    preset7dTip: { id: "Tampilkan hanya 7 hari kalender terakhir dari data.", en: "Show only the last 7 calendar days of the data." },
     presetAll: { id: "Semua", en: "All" },
     presetAllTip: { id: "Tampilkan seluruh data tanpa batasan tanggal.", en: "Show all data with no date restriction." },
     trendHeading: { id: "Tren Gabungan Sensor Operasional", en: "Combined Operational Sensor Trend" },
