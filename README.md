@@ -87,13 +87,18 @@ Engine mengevaluasi setiap baris **secara berurutan sesuai prioritas** (baris pe
 ```
 rig-status-dashboard/
 ├── index.html                 # ⭐ FILE UTAMA — buka file ini di browser, tanpa instalasi
-├── index.template.html        # Template sumber HTML/CSS + 2 placeholder skrip (untuk maintainability)
+├── index.template.html        # Template sumber HTML/CSS + placeholder skrip (untuk maintainability)
 ├── assets/
-│   ├── app.src.js             # Sumber JavaScript aplikasi (readable, di-inline ke index.html saat build)
+│   ├── engine.js              # Engine murni (klasifikasi status + parsing CSV) — dipakai browser & test Node
+│   ├── app.src.js             # Sumber JavaScript UI aplikasi (di-inline ke index.html saat build)
+│   ├── sample-data.csv        # Dataset sampel telemetri riil (di-inline ke index.html saat build)
 │   └── vendor/
 │       └── chart.umd.min.js   # Chart.js v4.4.4 (MIT License) — disematkan inline agar dashboard 100% offline
 ├── scripts/
-│   └── build.py                # Script build: menggabungkan template + app.src.js + chart.umd.min.js → index.html
+│   └── build.py               # Script build: template + engine + app + sample CSV + Chart.js → index.html
+├── tests/
+│   ├── engine.test.js         # Unit test engine (matriks aturan klasifikasi, parsing CSV, utilitas)
+│   └── app-smoke.test.js      # Smoke test: eksekusi app + snapshot klasifikasi dataset bawaan
 ├── docs/
 │   ├── technical-summary.md   # Ringkasan pendekatan & keputusan teknis
 │   └── reflection.md          # Poin refleksi pengembangan lanjutan
@@ -102,13 +107,15 @@ rig-status-dashboard/
 
 **Untuk pengguna akhir:** cukup gunakan `index.html` — semua kode (CSS, Chart.js, dan logika aplikasi) sudah tergabung di dalamnya, tidak ada dependency eksternal maupun panggilan jaringan.
 
-**Untuk pengembangan lanjutan:** edit `index.template.html` (markup/style) atau `assets/app.src.js` (logika aplikasi), lalu jalankan:
+**Untuk pengembangan lanjutan:** edit `index.template.html` (markup/style), `assets/engine.js` (logika klasifikasi/CSV), atau `assets/app.src.js` (logika UI), lalu jalankan:
 
 ```bash
-python3 scripts/build.py
+python3 scripts/build.py           # regenerasi index.html
+python3 scripts/build.py --check   # verifikasi index.html sesuai sumber (untuk CI/pre-commit)
+node --test tests/*.test.js        # jalankan unit test (Node 18+, tanpa dependency)
 ```
 
-untuk meregenerasi `index.html`. Build ini murni bersifat opsional/developer-convenience — tidak diperlukan untuk *menjalankan* dashboard.
+Build ini murni bersifat opsional/developer-convenience — tidak diperlukan untuk *menjalankan* dashboard.
 
 ---
 

@@ -87,13 +87,18 @@ The engine evaluates each row **in priority order** (the first matching rule det
 ```
 rig-status-dashboard/
 ├── index.html                 # ⭐ MAIN FILE — open this file in a browser, no install needed
-├── index.template.html        # Source HTML/CSS template + 2 script placeholders (for maintainability)
+├── index.template.html        # Source HTML/CSS template + script placeholders (for maintainability)
 ├── assets/
-│   ├── app.src.js             # App JavaScript source (readable, inlined into index.html at build time)
+│   ├── engine.js              # Pure engine (status classification + CSV parsing) — shared by browser & Node tests
+│   ├── app.src.js             # App UI JavaScript source (inlined into index.html at build time)
+│   ├── sample-data.csv        # Real-telemetry sample dataset (inlined into index.html at build time)
 │   └── vendor/
 │       └── chart.umd.min.js   # Chart.js v4.4.4 (MIT License) — embedded inline so the dashboard is 100% offline
 ├── scripts/
-│   └── build.py                # Build script: merges template + app.src.js + chart.umd.min.js → index.html
+│   └── build.py               # Build script: template + engine + app + sample CSV + Chart.js → index.html
+├── tests/
+│   ├── engine.test.js         # Engine unit tests (classification rule matrix, CSV parsing, utilities)
+│   └── app-smoke.test.js      # Smoke test: executes the app + classification snapshot of the built-in dataset
 ├── docs/
 │   ├── technical-summary.md   # Technical approach & decisions summary
 │   └── reflection.md          # Reflection points on further development
@@ -102,13 +107,15 @@ rig-status-dashboard/
 
 **For end users:** just use `index.html` — all code (CSS, Chart.js, and app logic) is already bundled in, no external dependencies or network calls.
 
-**For further development:** edit `index.template.html` (markup/style) or `assets/app.src.js` (app logic), then run:
+**For further development:** edit `index.template.html` (markup/style), `assets/engine.js` (classification/CSV logic), or `assets/app.src.js` (UI logic), then run:
 
 ```bash
-python3 scripts/build.py
+python3 scripts/build.py           # regenerate index.html
+python3 scripts/build.py --check   # verify index.html matches the sources (for CI/pre-commit)
+node --test tests/*.test.js        # run the unit tests (Node 18+, zero dependencies)
 ```
 
-to regenerate `index.html`. This build step is purely an optional developer convenience — it isn't required to *run* the dashboard.
+This build step is purely an optional developer convenience — it isn't required to *run* the dashboard.
 
 ---
 

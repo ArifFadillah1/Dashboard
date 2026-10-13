@@ -472,47 +472,39 @@
 
 </script>
 <script>
-(function () {
+/* Rig status detection engine + CSV import/export.
+ *
+ * Pure data logic only — no DOM, no UI state — shared between the browser
+ * bundle and Node tests:
+ *   - in the browser it is inlined before app.src.js by scripts/build.py and
+ *     exposed as the global `RigEngine`;
+ *   - in Node it can be require()'d directly (see tests/engine.test.js).
+ *
+ * Errors thrown by parseCsv carry an `i18n` property with {id, en} message
+ * pairs; the UI layer picks the active language (engine code must not depend
+ * on the UI's language state).
+ */
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === "object" && module.exports) module.exports = api;
+  else root.RigEngine = api;
+})(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
 
+  function i18nError(pair) {
+    const e = new Error(pair.id);
+    e.i18n = pair;
+    return e;
+  }
+
   /* =========================================================================
-   * 0. UTILITIES
+   * UTILITIES (pure)
    * ====================================================================== */
-  function cssVar(name) {
-    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  }
-  function debounce(fn, wait) {
-    let h;
-    return function (...args) { clearTimeout(h); h = setTimeout(() => fn.apply(this, args), wait); };
-  }
-  function locale() { return state.lang === "en" ? "en-US" : "id-ID"; }
-  function fmtNum(v, d) { return Number(v).toLocaleString(locale(), { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
-  function escapeAttr(s) { return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-  function fmtDateTime(d) {
-    return d.toLocaleString(locale(), { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
-  }
-  function fmtDateShort(d) {
-    return d.toLocaleString(locale(), { day: "2-digit", month: "short" });
-  }
-  /** Picks the active-language string from a {id, en} pair — the single mechanism
-   *  used throughout the app for both static UI text and data-table descriptions. */
-  function tr(pair) { return pair[state.lang] || pair.id; }
-  function toInputDate(d) {
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-  }
   /** Parses a date-input value ("YYYY-MM-DD") as LOCAL midnight. A bare date string
    *  passed to new Date() parses as UTC midnight, which would shift the filter
    *  boundary by the timezone offset relative to the locally-parsed data timestamps. */
   function parseInputDate(value) { return new Date(value + "T00:00:00"); }
-  function downloadBlob(filename, content, mime) {
-    const blob = new Blob([content], { type: mime || "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-  }
+
   /** Stride-based decimation: keeps the array bounded for smooth chart rendering
    *  on large time-series while preserving the first/last point. */
   function decimate(rows, maxPoints) {
@@ -523,6 +515,7 @@
     if (out[out.length - 1] !== rows[rows.length - 1]) out.push(rows[rows.length - 1]);
     return { rows: out, step };
   }
+
   /** Min/max timestamp over rows in a single pass — spreading into Math.min/max
    *  (Math.min(...arr)) overflows the call stack on large uploads (~125k+ rows). */
   function tsExtent(rows) {
@@ -534,6 +527,7 @@
     }
     return { min, max };
   }
+
   /** Groups consecutive rows (already sorted by ts within a rig) that share the
    *  same classification into contiguous segments — used by both the status
    *  timeline and the anomaly log table. */
@@ -553,7 +547,7 @@
   }
 
   /* =========================================================================
-   * 1. DETECTION ENGINE (rule-based thresholds)
+   * DETECTION ENGINE (rule-based thresholds)
    * ====================================================================== */
   const THRESH = {
     WOB_ON: 2,               // klbs — minimum weight-on-bit that indicates bit/formation contact
@@ -644,20 +638,9 @@
     "Drilling", "Circulating", "Tripping In/Out", "Connection", "Idle/Standby",
     "Critical Anomaly/High Pressure Warning",
   ];
-  function statusColorVar(status) {
-    switch (status) {
-      case "Drilling": return "--s1-blue";
-      case "Circulating": return "--s3-aqua";
-      case "Tripping In/Out": return "--s2-orange";
-      case "Connection": return "--s5-magenta";
-      case "Idle/Standby": return "--s7-violet";
-      case "Critical Anomaly/High Pressure Warning": return "--status-critical";
-      default: return "--text-muted";
-    }
-  }
 
   /* =========================================================================
-   * 2. CSV IMPORT / EXPORT
+   * CSV IMPORT / EXPORT
    * ====================================================================== */
   const CSV_HEADERS = ["Date time server", "Bit Depth (ftMD)", "Hole Depth (ftMD)", "Block Position (ft)", "ROP (ft/h)", "Hookload (klb)", "WOB (klb)", "Rotary Torque (kft-lb)", "Surface RPM", "Standpipe Pressure (psi)", "Mud Flow Out %", "Mud Flow In (gpm)"];
   // Header matching is tolerant of unit suffixes in parentheses/percent signs (e.g. "Bit Depth (ftMD)" -> "bit depth"),
@@ -703,28 +686,32 @@
     return out.map((s) => s.trim());
   }
 
-  /** Groups raw rows sharing the same (rig, minute-precision timestamp) into a
-   *  single sample, keeping the LAST reading of that minute (assumes that
-   *  within-minute row order reflects arrival order).
-   *  Rows already logged at >= 1-minute intervals pass through unchanged, since
-   *  each gets its own bucket — no special-casing needed for either data shape. */
+  /** Resamples raw rows to one sample per (rig, minute), keeping the LAST reading
+   *  of each minute (assumes within-minute row order reflects arrival order).
+   *  Timestamps are truncated to minute precision, so high-frequency logs
+   *  (e.g. one reading every ~2 s) collapse to 1 row/minute as documented in the
+   *  README; rows already logged at >= 1-minute intervals pass through unchanged. */
   function bucketToMinute(rows) {
     const map = new Map();
-    for (const r of rows) map.set(r.rig + "|" + r.ts.getTime(), r);
+    for (const r of rows) {
+      const minuteMs = Math.floor(r.ts.getTime() / 60000) * 60000;
+      if (r.ts.getTime() !== minuteMs) r.ts = new Date(minuteMs);
+      map.set(r.rig + "|" + minuteMs, r);
+    }
     return [...map.values()];
   }
 
   function parseCsv(text, defaultRig) {
     const lines = text.split(/\r\n|\n/).filter((l) => l.trim().length > 0);
-    if (lines.length < 2) throw new Error(tr({ id: "File CSV kosong atau tidak memiliki baris data.", en: "CSV file is empty or has no data rows." }));
+    if (lines.length < 2) throw i18nError({ id: "File CSV kosong atau tidak memiliki baris data.", en: "CSV file is empty or has no data rows." });
     const headerCells = parseCsvLine(lines[0]).map(normalizeHeader);
     const colIndex = {};
     for (const field in HEADER_ALIASES) {
       const idx = headerCells.findIndex((h) => HEADER_ALIASES[field].includes(h));
-      if (idx === -1) throw new Error(tr({
+      if (idx === -1) throw i18nError({
         id: `Kolom wajib tidak ditemukan: "${field}". Header yang diterima: ${HEADER_ALIASES[field].join(" / ")}`,
         en: `Required column not found: "${field}". Accepted headers: ${HEADER_ALIASES[field].join(" / ")}`,
-      }));
+      });
       colIndex[field] = idx;
     }
     for (const field in OPTIONAL_HEADER_ALIASES) {
@@ -751,7 +738,7 @@
         rop: colIndex.rop === -1 ? 0 : parseFloat(cells[colIndex.rop]) || 0,
       });
     }
-    if (!rows.length) throw new Error(tr({ id: "Tidak ada baris data valid yang dapat diproses.", en: "No valid data rows could be processed." }));
+    if (!rows.length) throw i18nError({ id: "Tidak ada baris data valid yang dapat diproses.", en: "No valid data rows could be processed." });
     // Sort chronologically once so every downstream consumer (KPI "latest status"
     // per rig, timeline, alerts) can rely on row order even for unordered CSVs.
     const bucketed = bucketToMinute(rows).sort((a, b) => a.ts - b.ts);
@@ -770,12 +757,81 @@
     return lines.join("\n");
   }
 
+  return {
+    THRESH, STATUS_LIST,
+    classify, classifySeries, inferIntervalHours,
+    CSV_HEADERS, HEADER_ALIASES, OPTIONAL_HEADER_ALIASES,
+    normalizeHeader, parseCsvLine, bucketToMinute, parseCsv, serializeCsv,
+    parseInputDate, decimate, tsExtent, groupConsecutive,
+  };
+});
+
+</script>
+<script>
+(function () {
+  "use strict";
+
+  /* Pure data logic (classification engine, CSV parsing, array utilities) lives
+   * in assets/engine.js, which scripts/build.py inlines before this file. */
+  const {
+    THRESH, STATUS_LIST, inferIntervalHours, parseCsv, serializeCsv,
+    decimate, tsExtent, groupConsecutive, parseInputDate,
+  } = RigEngine;
+
   /* =========================================================================
-   * 3. APP STATE
+   * 0. UI UTILITIES
    * ====================================================================== */
-  // Minute-resampled excerpt of real drilling telemetry
-  // (see scripts/csv_sample.py for the analysis that grounded the thresholds above).
-  // Rig identity is not present in the source file, so it's labeled generically below.
+  function cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+  function debounce(fn, wait) {
+    let h;
+    return function (...args) { clearTimeout(h); h = setTimeout(() => fn.apply(this, args), wait); };
+  }
+  function locale() { return state.lang === "en" ? "en-US" : "id-ID"; }
+  function fmtNum(v, d) { return Number(v).toLocaleString(locale(), { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
+  function escapeAttr(s) { return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function fmtDateTime(d) {
+    return d.toLocaleString(locale(), { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+  function fmtDateShort(d) {
+    return d.toLocaleString(locale(), { day: "2-digit", month: "short" });
+  }
+  /** Picks the active-language string from a {id, en} pair — the single mechanism
+   *  used throughout the app for both static UI text and data-table descriptions. */
+  function tr(pair) { return pair[state.lang] || pair.id; }
+  function toInputDate(d) {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  function downloadBlob(filename, content, mime) {
+    const blob = new Blob([content], { type: mime || "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+  /** Maps an engine status to its CSS color variable (UI concern, stays here). */
+  function statusColorVar(status) {
+    switch (status) {
+      case "Drilling": return "--s1-blue";
+      case "Circulating": return "--s3-aqua";
+      case "Tripping In/Out": return "--s2-orange";
+      case "Connection": return "--s5-magenta";
+      case "Idle/Standby": return "--s7-violet";
+      case "Critical Anomaly/High Pressure Warning": return "--status-critical";
+      default: return "--text-muted";
+    }
+  }
+
+  /* =========================================================================
+   * 1. APP STATE
+   * ====================================================================== */
+  // Minute-resampled excerpt of real drilling telemetry, stored in
+  // assets/sample-data.csv and inlined into the marker below by scripts/build.py
+  // (this file is therefore not runnable unbuilt). Rig identity is not present
+  // in the source data, so it's labeled generically below.
   const EMBEDDED_SAMPLE_CSV = `Date time server,Bit Depth (ftMD),Hole Depth (ftMD),Block Position (ft),ROP (ft/h),Hookload (klb),WOB (klb),Rotary Torque (kft-lb),Surface RPM,Standpipe Pressure (psi),Mud Flow Out %,Mud Flow In (gpm)
 2026-09-09T03:00:00,526.42,794.79,65.79,2.7,21.32,0,0,0,0,0,0
 2026-09-09T03:01:00,526.42,794.79,65.79,2.7,20.69,0,0,0,0,0,0
@@ -8224,7 +8280,7 @@
   }
 
   /* =========================================================================
-   * 4. CHART.JS INSTANCES
+   * 2. CHART.JS INSTANCES
    * ====================================================================== */
   Chart.defaults.font.family = "system-ui, -apple-system, 'Segoe UI', sans-serif";
   Chart.defaults.color = cssVar("--text-secondary");
@@ -8362,7 +8418,7 @@
   }
 
   /* =========================================================================
-   * 5. TIMELINE (custom lightweight DOM — no chart lib needed for a Gantt-style swimlane)
+   * 3. TIMELINE (custom lightweight DOM — no chart lib needed for a Gantt-style swimlane)
    * ====================================================================== */
   let timelineTooltipEl = null;
   function renderTimeline(filteredRows) {
@@ -8446,7 +8502,7 @@
   }
 
   /* =========================================================================
-   * 6. KPI PANEL
+   * 4. KPI PANEL
    * ====================================================================== */
   function renderKpis(filteredRows) {
     const grid = document.getElementById("kpiGrid");
@@ -8486,7 +8542,7 @@
   }
 
   /* =========================================================================
-   * 7. ALERT & LOG TABLE
+   * 5. ALERT & LOG TABLE
    * ====================================================================== */
   function computeAlerts(filteredRows) {
     const alerts = [];
@@ -8549,7 +8605,7 @@
   }
 
   /* =========================================================================
-   * 8. FILTER UI (rig chips, dates, presets, param chips, focus rig select)
+   * 6. FILTER UI (rig chips, dates, presets, param chips, focus rig select)
    * ====================================================================== */
   function renderRigChips() {
     const wrap = document.getElementById("rigChips");
@@ -8659,7 +8715,7 @@
   }
 
   /* =========================================================================
-   * 9. CSV UPLOAD / DOWNLOAD / RESET
+   * 7. CSV UPLOAD / DOWNLOAD / RESET
    * ====================================================================== */
   function showBanner(msg, type) {
     const el = document.getElementById("uploadBanner");
@@ -8685,7 +8741,8 @@
           showBanner(tr({ id: `Berhasil memuat ${rows.length} baris dari ${state.rigs.length} rig (${file.name}).`,
                           en: `Successfully loaded ${rows.length} rows from ${state.rigs.length} rig(s) (${file.name}).` }), "ok");
         } catch (err) {
-          showBanner(tr({ id: `Gagal memproses CSV: ${err.message}`, en: `Failed to process CSV: ${err.message}` }), "error");
+          const detail = err.i18n ? tr(err.i18n) : err.message;
+          showBanner(tr({ id: `Gagal memproses CSV: ${detail}`, en: `Failed to process CSV: ${detail}` }), "error");
         }
       };
       reader.readAsText(file);
@@ -8711,7 +8768,7 @@
   }
 
   /* =========================================================================
-   * 9b. STATIC TEXT I18N
+   * 8. STATIC TEXT I18N
    * ====================================================================== */
   const STATIC_I18N = {
     subtitle: { id: "Deteksi status operasional rig (Drilling, Circulating, Tripping In/Out, Idle/Standby, Critical Anomaly) berbasis rule-engine ambang batas parameter sensor pemboran.",
@@ -8792,7 +8849,7 @@
   }
 
   /* =========================================================================
-   * 10. ENGINE EXPLAINER (mirrors README classification matrix)
+   * 9. ENGINE EXPLAINER (mirrors README classification matrix)
    * ====================================================================== */
   const ENGINE_ROWS = [
     { status: "Critical Anomaly/High Pressure Warning",
@@ -8825,7 +8882,7 @@
   }
 
   /* =========================================================================
-   * 11. RENDER PIPELINE
+   * 10. RENDER PIPELINE
    * ====================================================================== */
   function fullRender() {
     const filtered = getFilteredRows();
