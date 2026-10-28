@@ -1,10 +1,9 @@
 /* Rig status detection engine + CSV import/export.
  *
- * Pure data logic only — no DOM, no UI state — shared between the browser
- * bundle and Node tests:
+ * Pure data logic only — no DOM, no UI state:
  *   - in the browser it is inlined before app.src.js by scripts/build.py and
  *     exposed as the global `RigEngine`;
- *   - in Node it can be require()'d directly (see tests/engine.test.js).
+ *   - in Node it can be require()'d directly (module.exports).
  *
  * Errors thrown by parseCsv carry an `i18n` property with {id, en} message
  * pairs; the UI layer picks the active language (engine code must not depend
