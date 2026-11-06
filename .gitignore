@@ -1,1 +1,20 @@
+# OS
 .DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# Python (scripts/build.py)
+__pycache__/
+*.pyc
+
+# Logs / env
+*.log
+.env
+.env.*
+
+# Node is not used by this project; ignored defensively
+node_modules/

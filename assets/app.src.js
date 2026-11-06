@@ -146,7 +146,6 @@
     endDate: null,
     focusRig: null,
     visibleParams: new Set(["wob", "spp", "bitDepth"]),
-    sourceLabel: "Sampel Data Riil (Bawaan)",
     sortCol: "start",
     sortDir: "desc",
     intervalHours: 1 / 60,
@@ -632,10 +631,9 @@
     const el = document.getElementById("uploadBanner");
     el.textContent = msg; el.hidden = false; el.className = type ? type : "";
   }
-  function loadDataset(rows, label) {
+  function loadDataset(rows) {
     state.rows = rows;
     state.rigs = [...new Set(rows.map((r) => r.rig))].sort();
-    state.sourceLabel = label;
     resetFiltersToFullRange();
     renderRigChips(); syncFocusRigSelect(); syncDateInputs(); renderParamChips();
     fullRender();
@@ -648,7 +646,7 @@
         try {
           const defaultRig = file.name.replace(/\.[^.]+$/, "");
           const rows = parseCsv(reader.result, defaultRig);
-          loadDataset(rows, `Upload: ${file.name}`);
+          loadDataset(rows);
           const skippedNote = rows.skippedRows
             ? tr({ id: ` ${rows.skippedRows} baris dilewati karena timestamp tidak valid.`,
                    en: ` ${rows.skippedRows} row(s) skipped due to invalid timestamps.` })
@@ -667,7 +665,7 @@
       downloadBlob("sample_rig_data.csv", serializeCsv(SAMPLE_ROWS));
     });
     document.getElementById("resetSampleBtn").addEventListener("click", () => {
-      loadDataset(SAMPLE_ROWS, "Sampel Data Riil (Bawaan)");
+      loadDataset(SAMPLE_ROWS);
       document.getElementById("uploadBanner").hidden = true;
     });
     document.getElementById("themeToggle").addEventListener("click", () => {

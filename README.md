@@ -54,6 +54,8 @@ index.template.html            (markup + CSS + 3 marker <script>)
 
 `scripts/build.py` menyalin isi tiap file sumber ke posisi marker-nya di `index.template.html` (CSV disisipkan lebih dulu ke dalam `app.src.js`), lalu menulis hasilnya ke `index.html`.
 
+`index.html` **sengaja ikut di-commit** ke repository: tidak ada CI, GitHub Pages, maupun langkah deploy lain yang membangunnya — repository (atau unduhan ZIP-nya) itu sendiri adalah bentuk distribusinya, sehingga file yang di-commit harus selalu sinkron dengan sumbernya (`python3 scripts/build.py --check`).
+
 > ⚠️ **Jangan pernah mengedit `index.html` secara manual.** Setiap perubahan pada `index.template.html` atau file di `assets/` **wajib** diikuti dengan menjalankan ulang `python3 scripts/build.py`, jika tidak `index.html` akan basi (stale) dan perubahan Anda hilang pada build berikutnya.
 
 Pemisahan kode murni (`assets/engine.js`) dari kode UI (`assets/app.src.js`) membuat logika klasifikasi dan parsing CSV tetap dapat dibaca, di-*diff*, dan dipakai ulang di luar browser (lihat [API Publik](#api-publik-assetsenginejs)).

@@ -54,6 +54,8 @@ index.template.html            (markup + CSS + 3 marker <script> blocks)
 
 `scripts/build.py` copies each source file into its marker position in `index.template.html` (the CSV is substituted into `app.src.js` first), then writes the result to `index.html`.
 
+`index.html` is **committed on purpose**: there is no CI, GitHub Pages, or other deploy step that builds it — the repository (or its ZIP download) is itself the distribution, so the committed file must always match its sources (`python3 scripts/build.py --check`).
+
 > ⚠️ **Never edit `index.html` by hand.** Any change to `index.template.html` or to a file under `assets/` **must** be followed by re-running `python3 scripts/build.py`, otherwise `index.html` goes stale and your change is lost on the next build.
 
 Keeping the pure logic (`assets/engine.js`) separate from the UI code (`assets/app.src.js`) keeps the classification and CSV parsing readable, diffable, and reusable outside the browser (see [Public API](#public-api-assetsenginejs)).
