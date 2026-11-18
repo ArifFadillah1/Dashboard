@@ -64,7 +64,7 @@ Pemisahan kode murni (`assets/engine.js`) dari kode UI (`assets/app.src.js`) mem
 
 ## Dataset
 
-Dataset bawaan (default) adalah **data telemetri riil** (`assets/sample-data.csv`, 7.330 baris data), bukan data sintetis. Karena file sumber mencatat pembacaan setiap ~1,5–2 detik (30–50 baris/menit) namun timestamp hanya presisi menit, engine me-resample data ke **1 baris per menit** — mengambil pembacaan terakhir dalam menit tersebut sebagai representasi (asumsi: urutan baris dalam satu menit mencerminkan urutan kedatangan data). Identitas rig tidak ada pada file sumber, sehingga ditampilkan sebagai satu label generik ("Rig (Data Riil)").
+Dataset bawaan (default) adalah **data telemetri riil** (`assets/sample-data.csv`, 7.330 baris data), bukan data sintetis. File bawaan ini sudah di-resample ke **1 baris per menit** dari telemetri sumber, yang mencatat pembacaan setiap ~1,5–2 detik (30–50 baris/menit) dengan timestamp presisi menit — pembacaan terakhir dalam menit tersebut yang dipakai (asumsi: urutan baris dalam satu menit mencerminkan urutan kedatangan data). Engine menerapkan resampling 1 baris/menit yang sama pada CSV yang diunggah; untuk file bawaan, langkah ini tidak mengubah apa pun. Identitas rig tidak ada pada file sumber, sehingga ditampilkan sebagai satu label generik ("Rig (Data Riil)").
 
 Anda bisa mengunggah CSV Anda sendiri — lihat format di bawah.
 
@@ -129,6 +129,8 @@ Header persis yang dipakai dataset bawaan (dan yang dihasilkan tombol **⬇️ U
 Date time server,Bit Depth (ftMD),Hole Depth (ftMD),Block Position (ft),ROP (ft/h),Hookload (klb),WOB (klb),Rotary Torque (kft-lb),Surface RPM,Standpipe Pressure (psi),Mud Flow Out %,Mud Flow In (gpm)
 2026-09-09T03:00:00,526.42,794.79,65.79,2.7,21.32,0,0,0,0,0,0
 ```
+
+File hasil unduhan memakai header yang sama, tetapi timestamp ditulis sebagai ISO UTC (mis. `…T03:00:00.000Z`, bergeser mengikuti zona waktu browser) dan angka dibulatkan per kolom.
 
 ---
 
