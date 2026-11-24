@@ -64,7 +64,7 @@ Keeping the pure logic (`assets/engine.js`) separate from the UI code (`assets/a
 
 ## Dataset
 
-The default dataset is **real telemetry data** (`assets/sample-data.csv`, 7,330 data rows), not synthetic data. Because the source file logs a reading every ~1.5–2 seconds (30–50 rows/minute) but timestamps are only minute-precision, the engine resamples the data to **1 row per minute** — taking the last reading within that minute as the representative value (assumption: row order within a minute reflects arrival order). Rig identity is not present in the source file, so it's shown as a single generic label ("Rig (Data Riil)").
+The default dataset is **real telemetry data** (`assets/sample-data.csv`, 7,330 data rows), not synthetic data. The bundled file is already resampled to **1 row per minute** from the source telemetry, which logged a reading every ~1.5–2 seconds (30–50 rows/minute) with minute-precision timestamps — the last reading within each minute is kept (assumption: row order within a minute reflects arrival order). The engine applies the same 1-row/minute resampling to uploaded CSVs; for the bundled file it changes nothing. Rig identity is not present in the source file, so it's shown as a single generic label ("Rig (Data Riil)").
 
 You can upload your own CSV — see the format below.
 
@@ -129,6 +129,8 @@ The exact header used by the built-in dataset (and produced by the **⬇️ Down
 Date time server,Bit Depth (ftMD),Hole Depth (ftMD),Block Position (ft),ROP (ft/h),Hookload (klb),WOB (klb),Rotary Torque (kft-lb),Surface RPM,Standpipe Pressure (psi),Mud Flow Out %,Mud Flow In (gpm)
 2026-09-09T03:00:00,526.42,794.79,65.79,2.7,21.32,0,0,0,0,0,0
 ```
+
+The downloaded file has the same header, but timestamps are written as UTC ISO strings (e.g. `…T03:00:00.000Z`, shifted by the browser's time zone) and numbers are rounded per column.
 
 ---
 
